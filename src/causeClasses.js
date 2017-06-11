@@ -75,7 +75,7 @@ export default {
 
         prevent({currentTarget}){
 
-            if(currentTarget.constructor !== window.Worker) return true;
+            if(typeof currentTarget != "object" || currentTarget.constructor !== window.Worker) return true;
 
         }
 
