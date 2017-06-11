@@ -1,0 +1,12 @@
+node_modules/
+src/
+script/
+test/
+garbage/
+.babelrc
+.eslintrc
+.flowconfig
+.gitignore
+karma.conf.js
+yarn.lock
+commitMessage.txt

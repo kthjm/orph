@@ -1,0 +1,15 @@
+{
+
+    "presets" : [
+        "flow",
+        "power-assert",
+        "airbnb",
+        "es2015"
+    ],
+
+    "plugins" : [
+        "add-module-exports",
+        "transform-runtime"
+    ]
+
+}
