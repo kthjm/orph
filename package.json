@@ -1,7 +1,7 @@
 {
   "name": "orph",
-  "version": "0.0.1",
-  "description": "",
+  "version": "0.0.2",
+  "description": "orph eat causes, and generate create fn.",
   "main": "dist/index.js",
   "scripts": {
     "karma": "karma start",
