@@ -1,6 +1,6 @@
 {
   "name": "orph",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "orph eat causes, and generate create fn.",
   "main": "dist/index.js",
   "scripts": {
