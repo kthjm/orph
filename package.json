@@ -9,7 +9,7 @@
     "babel": "cross-env NODE_ENV=compile babel src --out-dir dist",
     "lint": "eslint --fix dist",
     "compile": "run-s babel lint",
-    "watch": "cross-env NODE_ENV=mocha mocha -w test/unit/rewire.js",
+    "watch": "cross-env NODE_ENV=local mocha -w test/unit/rewire.js",
     "test": "cross-env NODE_ENV=test nyc mocha test/unit/rewire.js",
     "coverage": "nyc report --reporter=text-lcov | coveralls"
   },
