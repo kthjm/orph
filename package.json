@@ -1,28 +1,24 @@
 {
   "name": "orph",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "orph eat causes, and generate create fn.",
   "main": "dist/index.js",
   "scripts": {
-
     "karma": "cross-env NODE_ENV=karma karma start",
-
     "flow": "flow status",
     "babel": "cross-env NODE_ENV=compile babel src --out-dir dist",
     "lint": "eslint --fix dist",
     "compile": "run-s babel lint",
-
     "test": "cross-env NODE_ENV=test nyc mocha test/unit.js",
     "coverage": "nyc report --reporter=text-lcov | coveralls"
-    
   },
   "nyc": {
-      "reporter": [
-          "lcov",
-          "text"
-      ],
-      "sourceMap": false,
-      "instrument": false
+    "reporter": [
+      "lcov",
+      "text"
+    ],
+    "sourceMap": false,
+    "instrument": false
   },
   "author": "kthjm <toxictoxer@gmail.com>",
   "repository": {
