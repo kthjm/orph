@@ -10,7 +10,7 @@ var _causeClasses2 = _interopRequireDefault(_causeClasses);
 
 var _createLater = require("./createLater.js");
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 // import type {causebefore} from "./arguxType.js";
 
@@ -23,26 +23,22 @@ var addMessageListenerNeed = function addMessageListenerNeed(causes) {
     return includesWorker;
 };
 
-exports["default"] = function (causes) {
+exports.default = function (causes) {
 
     var closure = {
         realCauses: causes.map(function (_cause) {
             var cause = _cause.cause;
 
-            var CauseClass = _causeClasses2["default"][cause];
+            var CauseClass = _causeClasses2.default[cause];
             return new CauseClass(_cause);
         }),
         addWorkerNeed: addMessageListenerNeed(causes)
     };
 
     return {
-        create: function () {
-            function create(react) {
-                return _createLater.create.call(closure, react);
-            }
-
-            return create;
-        }(),
+        create: function create(react) {
+            return _createLater.create.call(closure, react);
+        },
         removeWorkerListener: !closure.addWorkerNeed ? false : function (argus) {
             return _createLater.ww.removeEventListener("message", argus);
         }

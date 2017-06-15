@@ -3,9 +3,11 @@ src/
 script/
 test/
 garbage/
+coverage/
+.nyc_output/
 .babelrc
 .eslintrc
 .flowconfig
 .gitignore
+.travis.yml
 karma.conf.js
-commitMessage.txt

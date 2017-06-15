@@ -3,48 +3,27 @@
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.create = exports.ww = undefined;
 
-var _entries = require("babel-runtime/core-js/object/entries");
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
-var _entries2 = _interopRequireDefault(_entries);
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-var _assign = require("babel-runtime/core-js/object/assign");
-
-var _assign2 = _interopRequireDefault(_assign);
-
-var _defineProperty2 = require("babel-runtime/helpers/defineProperty");
-
-var _defineProperty3 = _interopRequireDefault(_defineProperty2);
-
-var _slicedToArray2 = require("babel-runtime/helpers/slicedToArray");
-
-var _slicedToArray3 = _interopRequireDefault(_slicedToArray2);
-
-var _toConsumableArray2 = require("babel-runtime/helpers/toConsumableArray");
-
-var _toConsumableArray3 = _interopRequireDefault(_toConsumableArray2);
-
-var _map = require("babel-runtime/core-js/map");
-
-var _map2 = _interopRequireDefault(_map);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 var workerString = 'self.addEventListener("message",(e)=>(postMessage(e.data)))';
 var ww = exports.ww = typeof Worker === "undefined" ? false : new Worker(URL.createObjectURL(new Blob([workerString])));
 var postMessage = !ww ? false : ww.postMessage.bind(ww);
 
-var CustomMap = _map2["default"];
+var CustomMap = Map;
 CustomMap.prototype.toObject = function () {
-    return [].concat((0, _toConsumableArray3["default"])(this.entries())).map(function (_ref) {
-        var _ref2 = (0, _slicedToArray3["default"])(_ref, 2),
+    return [].concat(_toConsumableArray(this.entries())).map(function (_ref) {
+        var _ref2 = _slicedToArray(_ref, 2),
             key = _ref2[0],
             value = _ref2[1];
 
-        return (0, _defineProperty3["default"])({}, key, value);
+        return _defineProperty({}, key, value);
     }).reduce(function (pre, cur) {
-        return (0, _assign2["default"])(pre, cur);
+        return Object.assign(pre, cur);
     });
 };
 
@@ -54,7 +33,7 @@ var create = exports.create = function create(react) {
 
 
     if (this.clone) this.clone.clear();
-    this.clone = new CustomMap((0, _entries2["default"])(state));
+    this.clone = new CustomMap(Object.entries(state));
 
     if (this.render) this.render = null;
     this.render = orderRender(setState.bind(react), this.clone);
@@ -120,9 +99,9 @@ var orderClone = function orderClone(stateKeys, clone) {
 
     if (!stateKeys.length) return {};
     return stateKeys.map(function (stateKey) {
-        return (0, _defineProperty3["default"])({}, stateKey, clone.get(stateKey));
+        return _defineProperty({}, stateKey, clone.get(stateKey));
     }).reduce(function (pre, cur) {
-        return (0, _assign2["default"])(pre, cur);
+        return Object.assign(pre, cur);
     });
 };
 
@@ -131,7 +110,7 @@ var orderSet = function orderSet(stateKeys, clone) {
         if (!Boolean(stateKeys.filter(function (stateKey) {
             return stateKey == key;
         }).length)) {
-            console.error("this business can't touch \"" + String(key) + "\". registered is [" + String(stateKeys) + "].");
+            console.error("this business can't touch \"" + key + "\". registered is [" + stateKeys + "].");
             return false;
         }
         return clone.set(key, val);

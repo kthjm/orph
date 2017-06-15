@@ -1,1 +1,1 @@
---require ./babelHookForMocha.js
+--compilers js:babel-register

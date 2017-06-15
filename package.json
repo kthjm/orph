@@ -4,17 +4,19 @@
   "description": "orph eat causes, and generate create fn.",
   "main": "dist/index.js",
   "scripts": {
-    "mocha": "mocha --require ./babelHookForMocha.js",
-    "karma": "karma start",
-    "flow": "flow",
-    "babel": "babel src --no-babelrc --presets es2015,flow,power-assert --plugins add-module-exports --out-dir dist",
+
+    "karma": "cross-env NODE_ENV=karma karma start",
+
+    "flow": "flow status",
+    "babel": "cross-env NODE_ENV=compile babel src --out-dir dist",
     "lint": "eslint --fix dist",
-    "compile": "run-s babel lint"
+    "compile": "run-s babel lint",
+
+    "test": "cross-env NODE_ENV=test nyc mocha test/unit.js",
+    "coverage": "nyc report --reporter=text-lcov | coveralls"
+    
   },
   "nyc": {
-      "require": [
-          "babel-register"
-      ],
       "reporter": [
           "lcov",
           "text"
