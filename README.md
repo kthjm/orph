@@ -1,4 +1,8 @@
 # orph
+[![npm version](https://img.shields.io/npm/v/orph.svg)](https://www.npmjs.com/package/orph)
+[![Build Status](https://travis-ci.org/kthjm/orph.svg?branch=master)](https://travis-ci.org/kthjm/orph)
+[![Coverage Status](https://coveralls.io/repos/github/kthjm/orph/badge.svg?branch=master)](https://coveralls.io/github/kthjm/orph?branch=master)
+[![Code Climate](https://codeclimate.com/github/kthjm/orph/badges/gpa.svg)](https://codeclimate.com/github/kthjm/orph)
 
 **`orph` is listener manager to aim component-driven development of `React`.**
 
