@@ -3,16 +3,10 @@
 import nodeClasses from "./nodeClasses.js";
 
 class Cause {
-
     constructor({cause,nodes}){
-
-        this.nodes = nodes.map((node)=>{
-            let NodeClass = nodeClasses[cause];
-            return new NodeClass(node);
-        });
-
+        let NodeClass = nodeClasses[cause];
+        this.nodes = nodes.map((node)=>(new NodeClass(node)));
     }
-
 }
 
 export default {
@@ -22,11 +16,9 @@ export default {
         constructor(node){super(node)}
 
         prevent({currentTarget}){
-
             if(!currentTarget) return true;
             if(currentTarget === window) return true;
             if(!currentTarget.nodeName) return true;
-
         }
 
     },
@@ -36,10 +28,8 @@ export default {
         constructor(node){super(node)}
 
         prevent({currentTarget}){
-
             if(!currentTarget) return true;
             if(currentTarget !== window) return true;
-
         }
 
     },
@@ -49,10 +39,8 @@ export default {
         constructor(node){super(node)}
 
         prevent({currentTarget}){
-
             if(!currentTarget) return true;
             if(currentTarget !== window) return true;
-
         }
 
     },
@@ -62,9 +50,7 @@ export default {
         constructor(node){super(node)}
 
         prevent({reactLifeCycle}){
-
             if(!reactLifeCycle) return true;
-
         }
 
     },
@@ -74,9 +60,8 @@ export default {
         constructor(node){super(node)}
 
         prevent({currentTarget}){
-
-            if(typeof currentTarget != "object" || currentTarget.constructor !== window.Worker) return true;
-
+            if(typeof currentTarget != "object") return true;
+            if(currentTarget.constructor !== window.Worker) return true;
         }
 
     },

@@ -6,22 +6,16 @@ import PathToRegExp from "path-to-regexp";
 class Node {
 
     constructor({condition,stateKeys,business}: node){
-
         (this: any).condition = condition;
         (this: any).stateKeys = stateKeys;
         (this: any).business = business;
-
     }
 
     prevent(e: e,clone: any){
-
         let {condition:{type,prevent}} = (this: any);
-
         if(e.type !== type) return true;
         if(prevent && prevent(e,Object.assign({},clone.toObject()))) return true;
-
-        return this.preventOfUnique(e,(this: any).condition);
-
+        if(this.preventOfUnique(e,(this: any).condition)) return true;
     }
 
 }
@@ -58,12 +52,9 @@ export default  {
     "path" : class extends Node {
 
         constructor(node: node){
-
             super(node);
-
-            let {condition:{path}} = node;
+            let {path} = node.condition;
             (this: any).determiner = PathToRegExp(path);
-
         }
 
         preventOfUnique(){
