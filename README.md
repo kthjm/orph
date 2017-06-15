@@ -2,15 +2,29 @@
 
 **`orph` is listener manager to aim component-driven development of `React`.**
 
-```js:1.js
+```sh
+npm i --save orph
+```
+```sh
+yarn add orph
+```
+```javascript
 import Orph from "orph";
+import causes from "./causes.js";
+const {create,removeWorkerListener} = Orph(causes);
+const listener = create(causes);
+```
+
+`listener` means all listeners defined in causes.
+
+```javascript
+import Orph from "orph";
+import causes from "./causes.js";
 const {create,removeWorkerListener} = Orph(causes);
 
 export default class Hoge extends React.Component {
   componentWillMount(){
     this.listener = create(this);
-  }
-  componentDidMount(){
     window.addEventListener("resize",this.listener);
   }
   render(){return(
@@ -30,11 +44,9 @@ export default class Hoge extends React.Component {
   }
 }
 ```
-`this.listener` means all listeners you defined.
-
 `causes` is array include containers storing listeners. the containers is divided by five cause.
 
-```js:causes.js
+```javascript
 const causes = [
   {cause:"dom",nodes:[{},{},{}]},
   {cause:"window",nodes:[{},{},{}]},
@@ -48,7 +60,7 @@ the cause is one of `"dom"`,`"window"`,`"path"`,`"react"`,`"worker"` so far.
 
 `node` is following.
 
-```js:nodes.js
+```javascript
 {
   condition: {},
   stateKeys: [],
@@ -56,7 +68,8 @@ the cause is one of `"dom"`,`"window"`,`"path"`,`"react"`,`"worker"` so far.
 }
 ```
 
-`condition` is object stored conditional information of the listener. It varies by its cause. explain below.  
-`stateKeys` is array includes keys of your component. the keys determining on `clone`.  
-`business` is a listener. `e` is the `e`. `clone` is your component state filterd by `stateKeys`. methods are `{set,render,post}`.
+`condition` is object stored conditional information of the listener. It varies by its cause. explain below.
 
+`stateKeys` is array includes keys of your component. the keys determining on `clone`.
+
+`business` is a listener. `e` is the `e`. `clone` is your component state filterd by `stateKeys`. methods are `{set,render,post}`.

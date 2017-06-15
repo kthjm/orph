@@ -8,5 +8,4 @@ garbage/
 .flowconfig
 .gitignore
 karma.conf.js
-yarn.lock
 commitMessage.txt

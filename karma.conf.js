@@ -48,7 +48,7 @@ module.exports = function(config) {
                     {
                         test: /\.js$/,
                         exclude: [require("path").resolve(__dirname,"node_modules")],
-                        use: [`babel-loader?cacheDirectory`],
+                        use: [`babel-loader?cacheDirectory`]
                     }
                 ]
             },
