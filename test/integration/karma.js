@@ -1,5 +1,5 @@
 import assert from "assert";
-import Orph from "../src/index.js";
+import Orph from "../../src/index.js";
 // import React from "react";
 // import {shallow} from "enzyme";
 // import {mount} from "enzyme";
