@@ -16,7 +16,6 @@ yarn add orph
 import Orph from "orph";
 import causes from "./causes.js";
 const {create,removeWorkerListener} = Orph(causes);
-const listener = create(causes);
 ```
 
 `listener` means all listeners defined in causes.
