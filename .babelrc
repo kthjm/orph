@@ -1,43 +1,43 @@
 {
 
+    "presets": [
+        "es2015",
+        "flow"
+    ],
+    "plugins": [
+        "add-module-exports",
+        "transform-runtime"
+    ],
+
     "env": {
 
         "compile": {
             "presets": [
-                "es2015",
-                "flow",
                 "power-assert"
-            ],
+            ]
+        },
+
+        "local": {
             "plugins": [
-                "add-module-exports"
+                "empower-assert",
+                "espower",
+                "rewire"
             ]
         },
 
         "test": {
-            "presets": [
-                "flow",
-                "es2015"
-            ],
             "plugins": [
-                "add-module-exports",
                 "empower-assert",
                 "espower",
                 "rewire",
-                "transform-runtime",
                 "istanbul"
             ]
         },
 
         "karma": {
             "presets": [
-                "flow",
-                "es2015",
                 "power-assert",
                 "airbnb"
-            ],
-            "plugins": [
-                "add-module-exports",
-                "transform-runtime"
             ]
         }
     },
