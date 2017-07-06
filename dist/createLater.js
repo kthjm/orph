@@ -50,7 +50,8 @@ CustomMap.prototype.toObject = function () {
 
 var create = exports.create = function create(react) {
     var state = react.state,
-        setState = react.setState;
+        setState = react.setState,
+        forceUpdate = react.forceUpdate;
 
 
     if (this.clone) this.clone.clear();
@@ -58,6 +59,9 @@ var create = exports.create = function create(react) {
 
     if (this.render) this.render = null;
     this.render = orderRender(setState.bind(react), this.clone);
+
+    if (this.update) this.update = null;
+    this.update = forceUpdate.bind(react);
 
     var newArgus = argus.bind(this);
     if (this.addWorkerNeed) ww.addEventListener("message", newArgus);
@@ -92,12 +96,14 @@ var comeBusiness = function comeBusiness(e, node, closureThis) {
         stateKeys = node.stateKeys,
         business = node.business;
     var clone = closureThis.clone,
-        render = closureThis.render;
+        render = closureThis.render,
+        update = closureThis.update;
 
 
     var businessArg = [e, orderClone(stateKeys, clone), {
         set: orderSet(stateKeys, clone),
         render: render,
+        update: update,
         post: condition.ww ? postMessage : undefined
     }];
 

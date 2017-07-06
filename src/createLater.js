@@ -17,13 +17,16 @@ CustomMap.prototype.toObject = function(){return(
 
 export const create = function(react){
 
-    let {state,setState} = react;
+    let {state,setState,forceUpdate} = react;
 
     if(this.clone) this.clone.clear();
     this.clone = new CustomMap(Object.entries(state));
 
     if(this.render) this.render = null;
     this.render = orderRender(setState.bind(react),this.clone);
+
+    if(this.update) this.update = null;
+    this.update = forceUpdate.bind(react);
 
     let newArgus = argus.bind(this);
     if(this.addWorkerNeed) ww.addEventListener("message",newArgus);
@@ -54,12 +57,13 @@ const argus = function(e){
 const comeBusiness = (e,node,closureThis) => {
 
     let {condition,stateKeys,business} = node;
-    let {clone,render} = closureThis;
+    let {clone,render,update} = closureThis;
 
     let businessArg = [e,orderClone(stateKeys,clone),{
-        set:orderSet(stateKeys,clone),
-        render:render,
-        post:(condition.ww) ? postMessage : undefined
+        set: orderSet(stateKeys,clone),
+        render: render,
+        update: update,
+        post: (condition.ww) ? postMessage : undefined
     }];
 
     if(!condition.gentle) return business(...businessArg);

@@ -12,13 +12,6 @@ npm i --save orph
 ```sh
 yarn add orph
 ```
-```javascript
-import Orph from "orph";
-import causes from "./causes.js";
-const {create,removeWorkerListener} = Orph(causes);
-```
-
-`listener` means all listeners defined in causes.
 
 ```javascript
 import Orph from "orph";
@@ -47,6 +40,9 @@ export default class Hoge extends React.Component {
   }
 }
 ```
+
+`listener` means all listeners defined in causes.
+
 `causes` is array include containers storing listeners. the containers is divided by five cause.
 
 ```javascript
@@ -75,4 +71,4 @@ the cause is one of `"dom"`,`"window"`,`"path"`,`"react"`,`"worker"` so far.
 
 `stateKeys` is array includes keys of your component. the keys determining on `clone`.
 
-`business` is a listener. `e` is the `e`. `clone` is your component state filterd by `stateKeys`. methods are `{set,render,post}`.
+`business` is a listener. `e` is the `e`. `clone` is your component state filterd by `stateKeys`. methods are `{set,render,update,post}`.
