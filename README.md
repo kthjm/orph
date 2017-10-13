@@ -1,74 +1,72 @@
 # orph
-[![npm version](https://img.shields.io/npm/v/orph.svg)](https://www.npmjs.com/package/orph)
+[![styled with prettier](https://img.shields.io/badge/styled_with-prettier-ff69b4.svg)](https://github.com/prettier/prettier)
 [![Build Status](https://travis-ci.org/kthjm/orph.svg?branch=master)](https://travis-ci.org/kthjm/orph)
-[![Coverage Status](https://coveralls.io/repos/github/kthjm/orph/badge.svg?branch=master)](https://coveralls.io/github/kthjm/orph?branch=master)
-[![Code Climate](https://codeclimate.com/github/kthjm/orph/badges/gpa.svg)](https://codeclimate.com/github/kthjm/orph)
+[![Coverage Status](https://coveralls.io/repos/github/kthjm/orph/badge.svg)](https://coveralls.io/github/kthjm/orph)
 
-**`orph` is listener manager to aim component-driven development of `React`.**
-
-```sh
-npm i --save orph
-```
-```sh
+## Installation
+```shell
 yarn add orph
 ```
+## Usage
+```js
+import React from 'react'
 
-```javascript
-import Orph from "orph";
-import causes from "./causes.js";
-const {create,removeWorkerListener} = Orph(causes);
+import Orph from 'orph'
+import listener1 from './listener1'
+import listener2 from './listener2'
+import listener3 from './listener3'
 
-export default class Hoge extends React.Component {
-  componentWillMount(){
-    this.listener = create(this);
-    window.addEventListener("resize",this.listener);
-  }
-  render(){return(
-    <div onClick={this.listener} />
-  )}
-  componentDidUpdate(preProps,preState){
-    this.listener({
-      reactLifeCycle: true,
-      type: "didupdate",
-      listenerName: "businessAtDidUpdate"
-    });
-  }
-  componentWillUnmount(){
-    window.removeEventListener("resize",this.listener);
-    removeWorkerListener(this.listener);
-    this.listener = null;
-  }
+const orph = new Orph([
+    ['NAME_1', listener1],
+    ['NAME_2', listener2, { states: [ 'bar' ] }]
+])
+
+orph.add('NAME_3', listener3, { dispatches: [ 'NAME_1' ] })
+
+export default class Root extends React.Component {
+    constructor(props){
+        super(props)
+        this.state = { foo: true, bar: 0 }
+    }
+    componentWillMount(){
+        orph.attach(this)
+        this.divOnClick = orph.create('NAME_3')
+    }
+    render(){
+        return <div onClick={this.divOnClick} />
+    }
+    componentDidMount(){
+        orph.dispatch('NAME_2', {/* data */})
+    }
+    componentWillUnmount(){
+        orph.detach()
+    }
 }
 ```
-
-`listener` means all listeners defined in causes.
-
-`causes` is array include containers storing listeners. the containers is divided by five cause.
-
-```javascript
-const causes = [
-  {cause:"dom",nodes:[{},{},{}]},
-  {cause:"window",nodes:[{},{},{}]},
-  {cause:"path",nodes:[{},{},{}]},
-  {cause:"react",nodes:[{},{},{}]},
-  {cause:"worker",nodes:[{},{},{}]}
-];
-```
-
-the cause is one of `"dom"`,`"window"`,`"path"`,`"react"`,`"worker"` so far.
-
-`node` is following.
-
-```javascript
-{
-  condition: {},
-  stateKeys: [],
-  business: (e,clone,methods)=>{}
+```js
+const listener = (e | data, methods) => {
+    methods.props()
+    methods.state()
+    methods.render()
+    methods.dispatch()
 }
 ```
+## API
+### new Orph()
+#### `.add()`
+##### options
+###### `states`
+###### `dispatches`
+#### `.attach()`
+#### `.detach()`
+#### `.create()`
+#### `.dispatch()`
+#### `.list()`
 
-`condition` is object stored conditional information of the listener. It varies by its cause. explain below.
-
-`stateKeys` is array includes keys of your component. the keys determining on `clone`.
-
-`business` is a listener. `e` is the `e`. `clone` is your component state filterd by `stateKeys`. methods are `{set,render,update,post}`.
+### methods as second argument
+#### `props()`
+#### `state()`
+#### `render()`
+#### `dispatch()`
+## License
+MIT (http://opensource.org/licenses/MIT)

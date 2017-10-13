@@ -1,13 +1,8 @@
-node_modules/
+flow-typed/
 src/
-script/
 test/
-garbage/
-coverage/
-.nyc_output/
-.babelrc
-.eslintrc
 .flowconfig
 .gitignore
+.prettierignore
 .travis.yml
-karma.conf.js
+yarn.lock
