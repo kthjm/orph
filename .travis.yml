@@ -6,7 +6,6 @@ after_success:
 deploy:
   provider: npm
   email: toxictoxer@gmail.com
-  skip_cleanup: true
   on:
     tags: true
   api_key:
