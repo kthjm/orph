@@ -11,7 +11,7 @@ describe(`throws until listener run`, () => {
     function test(method) {
       const invalidNames = ['', 10, true, undefined, null, {}, [], () => {}]
       invalidNames.forEach(invalidName =>
-        assert.throws(() => orph[method](invalidName), /Error: /)
+        assert.throws(() => orph[method](invalidName), /Error: orph./)
       )
     }
   })

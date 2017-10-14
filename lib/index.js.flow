@@ -59,15 +59,15 @@ export default class Orph {
 
   create(name: Name): ListenerWrapper {
     throwIf(name, 'string', `orph.create argument "name"`)
-    this._throwIfNotSet(`create()`)
+    this._throwIfNotActive(`create`)
     return e => {
       this._exec(name, e)
     }
   }
 
   dispatch(name: Name, first: First): ExecResult {
-    throwIf(name, 'string', `orph.create argument "name"`)
-    this._throwIfNotSet(`dispatch()`)
+    throwIf(name, 'string', `orph.dispatch argument "name"`)
+    this._throwIfNotActive(`dispatch`)
     return this._exec(name, first)
   }
 
@@ -91,7 +91,7 @@ export default class Orph {
     }
 
     return Promise.resolve().then(() => {
-      this._throwIfNotSet(`_exec()`)
+      this._throwIfNotActive(`_exec`)
 
       const listenerObject = this._listeners.get(name)
 
@@ -137,9 +137,9 @@ export default class Orph {
     this._setState(assign(preState, nextState))
   }
 
-  _throwIfNotSet(fnName: string): void {
+  _throwIfNotActive(fnName: string): void {
     if (!this.active) {
-      throw new Error(`not active but ${fnName}`)
+      throw new Error(`not active but ${fnName}()`)
     }
   }
 }
