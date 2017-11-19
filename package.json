@@ -1,12 +1,12 @@
 {
   "name": "orph",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "repository": "kthjm/orph",
   "author": "kthjm <toxictoxer@gmail.com>",
   "license": "MIT",
   "description": "Is this the MVC...???",
   "keywords": [],
-  "main": "./lib/index.js",
+  "main": "lib",
   "prettier": {
     "tabWidth": 2,
     "semi": false,
@@ -54,16 +54,16 @@
     "instrument": false
   },
   "scripts": {
-    "flow": "flow",
-    "nycha": "nyc mocha -t 10000",
-    "test": "cross-env NODE_ENV=test run-s flow nycha",
-    "coverage": "nyc report --reporter=text-lcov | coveralls",
+    "pretest": "flow",
+    "test": "cross-env NODE_ENV=test nyc mocha -t 10000",
+    "prebuild": "yarn test",
+    "build": "cross-env NODE_ENV=build babel ./src -d ./lib",
+    "postbuild": "run-s format copy",
     "copy": "flow-copy-source ./src ./lib",
     "format": "prettier --write **/*.js package.json",
-    "prebuild": "yarn format",
-    "build": "cross-env NODE_ENV=build babel ./src -d ./lib",
-    "postbuild": "run-s copy format",
-    "node": "node --require babel-register"
+    "report": "nyc report --reporter=lcov",
+    "codecov": "codecov",
+    "coverage": "run-s report codecov"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
@@ -73,7 +73,7 @@
     "babel-preset-flow": "^6.23.0",
     "babel-preset-power-assert": "^1.0.0",
     "babel-preset-react": "^6.24.1",
-    "coveralls": "^2.13.1",
+    "codecov": "^3.0.0",
     "cross-env": "^5.0.1",
     "enzyme": "^3.1.0",
     "enzyme-adapter-react-16": "^1.0.1",
