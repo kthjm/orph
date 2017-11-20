@@ -1,7 +1,10 @@
 # orph
-[![styled with prettier](https://img.shields.io/badge/styled_with-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
+
+[![npm](https://img.shields.io/npm/v/orph.svg?style=flat-square)](https://www.npmjs.com/package/orph)
+[![npm](https://img.shields.io/npm/dm/orph.svg?style=flat-square)](https://www.npmjs.com/package/orph)
 [![Build Status](https://img.shields.io/travis/kthjm/orph.svg?style=flat-square)](https://travis-ci.org/kthjm/orph)
 [![Coverage Status](https://img.shields.io/codecov/c/github/kthjm/orph.svg?style=flat-square)](https://codecov.io/github/kthjm/orph)
+[![styled with prettier](https://img.shields.io/badge/styled_with-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 
 ## Installation
 ```shell
