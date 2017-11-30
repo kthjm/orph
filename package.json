@@ -1,52 +1,14 @@
 {
   "name": "orph",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "repository": "kthjm/orph",
   "author": "kthjm <toxictoxer@gmail.com>",
   "license": "MIT",
+  "main": "dist/orph.cjs.js",
+  "jsnext:main": "dist/orph.es.js",
+  "module": "dist/orph.es.js",
   "description": "Is this the MVC...???",
   "keywords": [],
-  "main": "lib",
-  "prettier": {
-    "tabWidth": 2,
-    "semi": false,
-    "singleQuote": true
-  },
-  "babel": {
-    "env": {
-      "test": {
-        "presets": [
-          [
-            "env",
-            {
-              "targets": {
-                "browsers": ["last 2 Chrome versions"]
-              },
-              "debug": true
-            }
-          ],
-          "power-assert",
-          "react"
-        ],
-        "plugins": ["istanbul"]
-      },
-      "build": {
-        "presets": [
-          [
-            "env",
-            {
-              "targets": {
-                "browsers": ["last 2 versions", "safari >= 7"]
-              },
-              "debug": true
-            }
-          ],
-          "flow"
-        ],
-        "plugins": ["array-includes"]
-      }
-    }
-  },
   "nyc": {
     "require": ["babel-register", "jsdom-global/register"],
     "include": ["src"],
@@ -55,21 +17,25 @@
   },
   "scripts": {
     "pretest": "flow",
-    "test": "cross-env NODE_ENV=test nyc mocha -t 10000",
+    "test": "cross-env NODE_ENV=TEST nyc mocha",
     "prebuild": "yarn test",
-    "build": "cross-env NODE_ENV=build babel ./src -d ./lib",
-    "postbuild": "run-s format copy",
-    "copy": "flow-copy-source ./src ./lib",
+    "build": "cross-env NODE_ENV=BUILD node rollup.config.all.js",
+    "postbuild": "run-s process format copy",
+    "process:cjs": "node dist/orph.cjs.js",
+    "process:min": "node dist/orph.min.js",
+    "process": "run-p process:cjs process:min",
     "format": "prettier --write **/*.js package.json",
+    "copy": "flow-copy-source --verbose src dist",
     "report": "nyc report --reporter=lcov",
     "codecov": "codecov",
     "coverage": "run-s report codecov"
   },
   "devDependencies": {
-    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.0",
     "babel-plugin-array-includes": "^2.0.3",
     "babel-plugin-istanbul": "^4.1.4",
     "babel-preset-env": "^1.6.0",
+    "babel-preset-es2015-rollup": "^3.0.0",
     "babel-preset-flow": "^6.23.0",
     "babel-preset-power-assert": "^1.0.0",
     "babel-preset-react": "^6.24.1",
@@ -88,9 +54,19 @@
     "prettier": "^1.7.4",
     "react": "^16.0.0",
     "react-dom": "^16.0.0",
-    "react-test-renderer": "^16.0.0"
+    "react-test-renderer": "^16.0.0",
+    "rollup": "^0.52.0",
+    "rollup-plugin-babel": "^3.0.2",
+    "rollup-plugin-flow": "^1.1.1",
+    "rollup-plugin-uglify": "^2.0.1",
+    "uglify-es": "^3.2.0"
   },
   "peerDependencies": {
     "react": "^16.0.0"
+  },
+  "prettier": {
+    "tabWidth": 2,
+    "semi": false,
+    "singleQuote": true
   }
 }

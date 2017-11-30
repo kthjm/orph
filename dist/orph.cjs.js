@@ -1,9 +1,5 @@
 'use strict'
 
-Object.defineProperty(exports, '__esModule', {
-  value: true
-})
-
 var _typeof =
   typeof Symbol === 'function' && typeof Symbol.iterator === 'symbol'
     ? function(obj) {
@@ -18,12 +14,37 @@ var _typeof =
           : typeof obj
       }
 
-var _slicedToArray = (function() {
+var classCallCheck = function(instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError('Cannot call a class as a function')
+  }
+}
+
+var createClass = (function() {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i]
+      descriptor.enumerable = descriptor.enumerable || false
+      descriptor.configurable = true
+      if ('value' in descriptor) descriptor.writable = true
+      Object.defineProperty(target, descriptor.key, descriptor)
+    }
+  }
+
+  return function(Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps)
+    if (staticProps) defineProperties(Constructor, staticProps)
+    return Constructor
+  }
+})()
+
+var slicedToArray = (function() {
   function sliceIterator(arr, i) {
     var _arr = []
     var _n = true
     var _d = false
     var _e = undefined
+
     try {
       for (
         var _i = arr[Symbol.iterator](), _s;
@@ -31,6 +52,7 @@ var _slicedToArray = (function() {
         _n = true
       ) {
         _arr.push(_s.value)
+
         if (i && _arr.length === i) break
       }
     } catch (err) {
@@ -43,8 +65,10 @@ var _slicedToArray = (function() {
         if (_d) throw _e
       }
     }
+
     return _arr
   }
+
   return function(arr, i) {
     if (Array.isArray(arr)) {
       return arr
@@ -58,40 +82,18 @@ var _slicedToArray = (function() {
   }
 })()
 
-var _createClass = (function() {
-  function defineProperties(target, props) {
-    for (var i = 0; i < props.length; i++) {
-      var descriptor = props[i]
-      descriptor.enumerable = descriptor.enumerable || false
-      descriptor.configurable = true
-      if ('value' in descriptor) descriptor.writable = true
-      Object.defineProperty(target, descriptor.key, descriptor)
-    }
-  }
-  return function(Constructor, protoProps, staticProps) {
-    if (protoProps) defineProperties(Constructor.prototype, protoProps)
-    if (staticProps) defineProperties(Constructor, staticProps)
-    return Constructor
-  }
-})()
-
-function _toConsumableArray(arr) {
+var toConsumableArray = function(arr) {
   if (Array.isArray(arr)) {
-    for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
+    for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++)
       arr2[i] = arr[i]
-    }
+
     return arr2
   } else {
     return Array.from(arr)
   }
 }
 
-function _classCallCheck(instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError('Cannot call a class as a function')
-  }
-}
-
+//
 var isArray = Array.isArray
 var assign = Object.assign
 
@@ -99,19 +101,19 @@ var Orph = (function() {
   function Orph(listeners) {
     var _this = this
 
-    _classCallCheck(this, Orph)
+    classCallCheck(this, Orph)
 
     this.active = false
     this._listeners = new Map()
 
     if (isArray(listeners)) {
       listeners.forEach(function(tuple) {
-        return _this.add.apply(_this, _toConsumableArray(tuple))
+        return _this.add.apply(_this, toConsumableArray(tuple))
       })
     }
   }
 
-  _createClass(Orph, [
+  createClass(Orph, [
     {
       key: 'add',
       value: function add(name, listener, opts) {
@@ -133,9 +135,9 @@ var Orph = (function() {
       key: 'list',
       value: function list() {
         var list = {}
-        var entries = [].concat(_toConsumableArray(this._listeners.entries()))
+        var entries = [].concat(toConsumableArray(this._listeners.entries()))
         entries.forEach(function(_ref) {
-          var _ref2 = _slicedToArray(_ref, 2),
+          var _ref2 = slicedToArray(_ref, 2),
             name = _ref2[0],
             value = _ref2[1]
 
@@ -224,18 +226,17 @@ var Orph = (function() {
           if (!listenerObject) {
             throw new Error('methods.dispatch name is not added')
           } else {
-            listenerObject
-            var _listener = listenerObject.listener,
-              _render2 = listenerObject.render,
-              _dispatch = listenerObject.dispatch
-            var _state = _this4.state,
-              _props = _this4.props
+            var listener = listenerObject.listener,
+              render = listenerObject.render,
+              dispatch = listenerObject.dispatch
+            var state = _this4.state,
+              props = _this4.props
 
-            return _listener(first, {
-              render: _render2,
-              dispatch: _dispatch,
-              state: _state,
-              props: _props
+            return listener(first, {
+              render: render,
+              dispatch: dispatch,
+              state: state,
+              props: props
             })
           }
         })
@@ -288,11 +289,8 @@ var Orph = (function() {
       }
     }
   ])
-
   return Orph
 })()
-
-exports.default = Orph
 
 var throwIf = function throwIf(target, type, key) {
   if (!target) {
@@ -310,3 +308,5 @@ var throwIf = function throwIf(target, type, key) {
     )
   }
 }
+
+module.exports = Orph

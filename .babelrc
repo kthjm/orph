@@ -1,0 +1,16 @@
+{
+  "env": {
+    "TEST": {
+      "presets": [
+        ["env", { "targets": { "browsers": ["last 2 Chrome versions"] } }],
+        "power-assert",
+        "react"
+      ],
+      "plugins": ["istanbul"]
+    },
+    "BUILD": {
+      "presets": ["es2015-rollup"],
+      "plugins": ["array-includes"]
+    }
+  }
+}
