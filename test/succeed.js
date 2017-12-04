@@ -5,25 +5,35 @@ describe(`succeed`, () => {
   it(`options.states`, async () => {
     const orph = new Orph()
     orph.add('NAME', listener, { states: ['hoge'] })
-    orph.attach({ setState })
+    orph.attach({ setState, forceUpdate })
 
+    const nextState = {}
+    const callback = () => {}
     const data = {}
     await orph.dispatch('NAME', data)
 
     function listener(e, utils) {
       assert.deepStrictEqual(e, data)
-      utils.render()
+
+      utils.render(nextState, callback)
+      utils.update(callback)
     }
-    function setState(nextState) {
-      assert.ok(nextState)
+
+    function setState(partialState, cb) {
+      assert.deepStrictEqual(partialState, nextState)
+      assert.deepStrictEqual(cb, callback)
+    }
+
+    function forceUpdate(cb) {
+      assert.deepStrictEqual(cb, callback)
     }
   })
 
   it(`options.dispatches`, async () => {
     const orph = new Orph()
-    orph.add('NAME', listener, { dispatches: ['fuga'] })
-    orph.add('fuga', fuga)
-    orph.attach({ setState() {} })
+    orph.add('NAME', listener, { dispatches: ['FUGA'] })
+    orph.add('FUGA', fuga)
+    orph.attach({ setState() {}, forceUpdate() {} })
 
     const data1 = {}
     const data2 = {}
@@ -31,7 +41,7 @@ describe(`succeed`, () => {
 
     function listener(e, utils) {
       assert.deepStrictEqual(e, data1)
-      utils.dispatch('fuga', data2)
+      utils.dispatch('FUGA', data2)
     }
     function fuga(e, utils) {
       assert.deepStrictEqual(e, data2)

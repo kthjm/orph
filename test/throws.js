@@ -45,6 +45,7 @@ describe(`throws until listener run`, () => {
     orph.add('NAME', (data, utils) => {})
     orph.attach({
       setState: () => {},
+      forceUpdate: () => {},
       props: {},
       state: {}
     })
@@ -72,7 +73,7 @@ describe(`throws until listener run`, () => {
   })
 })
 describe(`throws later listener run`, () => {
-  it(`methods.dispatch(name: !added)`, async () =>
+  it(`methods.dispatch(name: !added)`, () =>
     frame(undefined, async methods => {
       const cause = 'NOT_ADDED_NAME'
       const expectMessage = `methods.dispatch name is not added`
@@ -83,7 +84,7 @@ describe(`throws later listener run`, () => {
       }
     }))
 
-  it(`methods.dispatch(name) touch not register dispatches`, async () =>
+  it(`methods.dispatch(name) touch not register dispatches`, () =>
     frame({ dispatches: ['VALID_NAME'] }, async methods => {
       const cause = 'INVALID_NAME'
       const expectMessage = `methods.dispatch touches dispatchName that is not registerd`
@@ -94,7 +95,7 @@ describe(`throws later listener run`, () => {
       }
     }))
 
-  it(`methods.render(nextState) touch not register states`, async () =>
+  it(`methods.render(nextState) touch not register states`, () =>
     frame({ states: ['foo'] }, methods =>
       assert.throws(
         () => methods.render({ foo: false, bar: 20 }),
@@ -108,6 +109,7 @@ describe(`throws later listener run`, () => {
 
     const stubReact = {
       setState() {},
+      forceUpdate() {},
       props: {
         hoge: 'value',
         fuga: false
@@ -129,6 +131,7 @@ describe(`throws later listener run`, () => {
       assert.ok(typeof methods.dispatch === 'function')
       assert.ok(typeof methods.state === 'function')
       assert.ok(typeof methods.props === 'function')
+      assert.ok(typeof methods.update === 'function')
 
       const state = methods.state()
       assert.deepStrictEqual(state.foo, stubReact.state.foo)

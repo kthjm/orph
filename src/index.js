@@ -4,71 +4,77 @@ const { assign } = Object
 
 export default class Orph {
   _listeners: Map<Name, ListenerObject>
-  active: boolean
-  _setState: SetState
-  props: PropsFn
-  state: StateFn
+  _reacts: Orph$Reacts | null
 
-  constructor(listeners: Listeners) {
-    this.active = false
+  constructor(listeners: Listeners): false | void {
     this._listeners = new Map()
-
-    if (isArray(listeners)) {
-      listeners.forEach(tuple => this.add(...tuple))
-    }
+    return isArray(listeners) && listeners.forEach(tuple => this.add(...tuple))
   }
 
   add(name: Name, listener: Listener, opts: ListenerOptions): void {
     throwIf(name, 'string', `orph.add argument "name"`)
     throwIf(listener, 'function', `orph.add argument "listener"`)
-    opts = opts || {}
-    const render = this._HoRender(opts.states)
-    const dispatch = this._HoDispatch(opts.dispatches)
+    const { states, dispatches } = opts || {}
+    const render = this._HoRender(states)
+    const dispatch = this._HoDispatch(dispatches)
     this._listeners.set(name, {
       listener,
       render,
       dispatch,
-      states: opts.states,
-      dispatches: opts.dispatches
+      list: { states, dispatches }
     })
   }
 
-  list() {
-    const list = {}
-    const entries = [...this._listeners.entries()]
-    entries.forEach(([name, value]) => {
-      list[name] = {
-        states: value.states,
-        dispatches: value.dispatches
-      }
-    })
-    return list
-  }
+  attach(r: React): void {
+    throwIf(r.setState, 'function', `react.setState`)
+    throwIf(r.forceUpdate, 'function', `react.forceUpdate`)
 
-  attach(react: React): void {
-    throwIf(react.setState, 'function', `react.setState`)
-    this._setState = react.setState.bind(react)
-    this.props = () => assign({}, react.props)
-    this.state = () => assign({}, react.state)
-    this.active = true
+    this._reacts = {
+      setState: (partialState, callback) => r.setState(partialState, callback),
+      update: callback => r.forceUpdate(callback),
+      props: () => assign({}, r.props),
+      state: () => assign({}, r.state)
+    }
   }
 
   detach(): void {
-    this.active = false
+    this._reacts = null
+  }
+
+  active(): boolean {
+    return Boolean(this._reacts)
   }
 
   create(name: Name): ListenerWrapper {
     throwIf(name, 'string', `orph.create argument "name"`)
     this._throwIfNotActive(`create`)
-    return e => {
-      this._exec(name, e)
-    }
+    return e => this._exec(name, e)
   }
 
   dispatch(name: Name, first: First): ExecResult {
     throwIf(name, 'string', `orph.dispatch argument "name"`)
     this._throwIfNotActive(`dispatch`)
     return this._exec(name, first)
+  }
+
+  _HoRender(states: States): Render {
+    return !isArray(states)
+      ? (partialState, callback) =>
+          this._reacts && this._reacts.setState(partialState, callback)
+      : (partialState, callback) => {
+          if (typeof partialState === 'object') {
+            const leaks = Object.keys(partialState).filter(
+              name => !states.includes(name)
+            )
+            if (leaks.length) {
+              throw new Error(
+                'methods.render touches stateName that is not registerd'
+              )
+            }
+          }
+
+          return this._reacts && this._reacts.setState(partialState, callback)
+        }
   }
 
   _HoDispatch(dispatches: Dispatches): Dispatch {
@@ -90,57 +96,41 @@ export default class Orph {
       first.persist()
     }
 
-    return Promise.resolve().then(() => {
-      this._throwIfNotActive(`_exec`)
+    return Promise.resolve()
+      .then(() => this._throwIfNotActive(`_exec`))
+      .then(() => {
+        const listenerObject = this._listeners.get(name)
 
-      const listenerObject = this._listeners.get(name)
-
-      if (!listenerObject) {
-        throw new Error(`methods.dispatch name is not added`)
-      } else {
+        if (!listenerObject) {
+          throw new Error(`methods.dispatch name is not added`)
+        }
         ;(listenerObject: ListenerObject)
+
         const { listener, render, dispatch } = listenerObject
-        const { state, props } = this
+        const { state, props, update } = this._reacts || {}
         return listener(first, {
           render,
           dispatch,
           state,
-          props
+          props,
+          update
         })
-      }
-    })
-  }
-
-  _HoRender(states: States): Render {
-    return !isArray(states)
-      ? nextState => this._render(nextState)
-      : nextState => {
-          if (typeof nextState === 'object') {
-            const leaks = Object.keys(nextState).filter(
-              name => !states.includes(name)
-            )
-            if (leaks.length) {
-              throw new Error(
-                'methods.render touches stateName that is not registerd'
-              )
-            }
-          }
-
-          return this._render(nextState)
-        }
-  }
-
-  _render(nextState: State): void {
-    if (!this.active) return
-
-    const preState = this.state()
-    this._setState(assign(preState, nextState))
+      })
   }
 
   _throwIfNotActive(fnName: string): void {
-    if (!this.active) {
+    if (!this.active()) {
       throw new Error(`not active but ${fnName}()`)
     }
+  }
+
+  list() {
+    const list = {}
+    const entries = [...this._listeners.entries()]
+    entries.forEach(([name, listenerObject]) => {
+      list[name] = listenerObject.list
+    })
+    return list
   }
 }
 
@@ -151,6 +141,13 @@ const throwIf = (target, type, key) => {
   if (typeof target !== type) {
     throw new TypeError(`${key} is not ${type} but ${typeof target}`)
   }
+}
+
+type Orph$Reacts = {
+  setState: SetState,
+  update: ForceUpdate,
+  props: PropsFn,
+  state: StateFn
 }
 
 type Listeners = Array<Add$Arg>
@@ -165,19 +162,21 @@ type ListenerOptions = {
   dispatches: Dispatches
 }
 
-type Render = (nextState: State) => void
+type Render = (partialState: State, callback: Render$Callback) => mixed
 type Dispatch = (name: Name, first: First) => ExecResult
 type ListenerObject = {
   listener: Listener,
   render: Render,
   dispatch: Dispatch,
-  states: States | void,
-  dispatches: Dispatches | void
+  list: {
+    states: States | void,
+    dispatches: Dispatches | void
+  }
 }
 
-type ExecResult = Promise<void>
+type ExecResult = Promise<*>
 
-type ListenerWrapper = (e: First) => void
+type ListenerWrapper = (e: First) => ExecResult
 type First = any
 type StateFn = () => State
 type PropsFn = () => Props
@@ -185,14 +184,18 @@ type Methods = {
   render: Render,
   dispatch: Dispatch,
   state: StateFn,
-  props: PropsFn
+  props: PropsFn,
+  update: ForceUpdate
 }
 
-type SetState = (nextState: State) => void
+type Render$Callback = () => mixed
+type SetState = (partialState: State, callback: Render$Callback) => void
+type ForceUpdate = (callback: Render$Callback) => void
 type State = any
 type Props = any
 type React = {
   state: State,
   props: Props,
-  setState: SetState
+  setState: SetState,
+  forceUpdate: ForceUpdate
 }

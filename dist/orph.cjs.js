@@ -103,14 +103,13 @@ var Orph = (function() {
 
     classCallCheck(this, Orph)
 
-    this.active = false
     this._listeners = new Map()
-
-    if (isArray(listeners)) {
+    return (
+      isArray(listeners) &&
       listeners.forEach(function(tuple) {
         return _this.add.apply(_this, toConsumableArray(tuple))
       })
-    }
+    )
   }
 
   createClass(Orph, [
@@ -119,54 +118,53 @@ var Orph = (function() {
       value: function add(name, listener, opts) {
         throwIf(name, 'string', 'orph.add argument "name"')
         throwIf(listener, 'function', 'orph.add argument "listener"')
-        opts = opts || {}
-        var render = this._HoRender(opts.states)
-        var dispatch = this._HoDispatch(opts.dispatches)
+
+        var _ref = opts || {},
+          states = _ref.states,
+          dispatches = _ref.dispatches
+
+        var render = this._HoRender(states)
+        var dispatch = this._HoDispatch(dispatches)
         this._listeners.set(name, {
           listener: listener,
           render: render,
           dispatch: dispatch,
-          states: opts.states,
-          dispatches: opts.dispatches
+          list: { states: states, dispatches: dispatches }
         })
-      }
-    },
-    {
-      key: 'list',
-      value: function list() {
-        var list = {}
-        var entries = [].concat(toConsumableArray(this._listeners.entries()))
-        entries.forEach(function(_ref) {
-          var _ref2 = slicedToArray(_ref, 2),
-            name = _ref2[0],
-            value = _ref2[1]
-
-          list[name] = {
-            states: value.states,
-            dispatches: value.dispatches
-          }
-        })
-        return list
       }
     },
     {
       key: 'attach',
-      value: function attach(react) {
-        throwIf(react.setState, 'function', 'react.setState')
-        this._setState = react.setState.bind(react)
-        this.props = function() {
-          return assign({}, react.props)
+      value: function attach(r) {
+        throwIf(r.setState, 'function', 'react.setState')
+        throwIf(r.forceUpdate, 'function', 'react.forceUpdate')
+
+        this._reacts = {
+          setState: function setState(partialState, callback) {
+            return r.setState(partialState, callback)
+          },
+          update: function update(callback) {
+            return r.forceUpdate(callback)
+          },
+          props: function props() {
+            return assign({}, r.props)
+          },
+          state: function state() {
+            return assign({}, r.state)
+          }
         }
-        this.state = function() {
-          return assign({}, react.state)
-        }
-        this.active = true
       }
     },
     {
       key: 'detach',
       value: function detach() {
-        this.active = false
+        this._reacts = null
+      }
+    },
+    {
+      key: 'active',
+      value: function active() {
+        return Boolean(this._reacts)
       }
     },
     {
@@ -177,7 +175,7 @@ var Orph = (function() {
         throwIf(name, 'string', 'orph.create argument "name"')
         this._throwIfNotActive('create')
         return function(e) {
-          _this2._exec(name, e)
+          return _this2._exec(name, e)
         }
       }
     },
@@ -190,74 +188,24 @@ var Orph = (function() {
       }
     },
     {
-      key: '_HoDispatch',
-      value: function _HoDispatch(dispatches) {
-        var _this3 = this
-
-        return !isArray(dispatches)
-          ? function(name, first) {
-              return _this3._exec(name, first)
-            }
-          : function(name, first) {
-              if (!(dispatches.indexOf(name) !== -1)) {
-                throw new Error(
-                  'methods.dispatch touches dispatchName that is not registerd'
-                )
-              }
-
-              return _this3._exec(name, first)
-            }
-      }
-    },
-    {
-      key: '_exec',
-      value: function _exec(name, first) {
-        var _this4 = this
-
-        if (first && typeof first.persist === 'function') {
-          first.persist()
-        }
-
-        return Promise.resolve().then(function() {
-          _this4._throwIfNotActive('_exec')
-
-          var listenerObject = _this4._listeners.get(name)
-
-          if (!listenerObject) {
-            throw new Error('methods.dispatch name is not added')
-          } else {
-            var listener = listenerObject.listener,
-              render = listenerObject.render,
-              dispatch = listenerObject.dispatch
-            var state = _this4.state,
-              props = _this4.props
-
-            return listener(first, {
-              render: render,
-              dispatch: dispatch,
-              state: state,
-              props: props
-            })
-          }
-        })
-      }
-    },
-    {
       key: '_HoRender',
       value: function _HoRender(states) {
-        var _this5 = this
+        var _this3 = this
 
         return !isArray(states)
-          ? function(nextState) {
-              return _this5._render(nextState)
+          ? function(partialState, callback) {
+              return (
+                _this3._reacts &&
+                _this3._reacts.setState(partialState, callback)
+              )
             }
-          : function(nextState) {
+          : function(partialState, callback) {
               if (
-                (typeof nextState === 'undefined'
+                (typeof partialState === 'undefined'
                   ? 'undefined'
-                  : _typeof(nextState)) === 'object'
+                  : _typeof(partialState)) === 'object'
               ) {
-                var leaks = Object.keys(nextState).filter(function(name) {
+                var leaks = Object.keys(partialState).filter(function(name) {
                   return !(states.indexOf(name) !== -1)
                 })
                 if (leaks.length) {
@@ -267,25 +215,92 @@ var Orph = (function() {
                 }
               }
 
-              return _this5._render(nextState)
+              return (
+                _this3._reacts &&
+                _this3._reacts.setState(partialState, callback)
+              )
             }
       }
     },
     {
-      key: '_render',
-      value: function _render(nextState) {
-        if (!this.active) return
+      key: '_HoDispatch',
+      value: function _HoDispatch(dispatches) {
+        var _this4 = this
 
-        var preState = this.state()
-        this._setState(assign(preState, nextState))
+        return !isArray(dispatches)
+          ? function(name, first) {
+              return _this4._exec(name, first)
+            }
+          : function(name, first) {
+              if (!(dispatches.indexOf(name) !== -1)) {
+                throw new Error(
+                  'methods.dispatch touches dispatchName that is not registerd'
+                )
+              }
+
+              return _this4._exec(name, first)
+            }
+      }
+    },
+    {
+      key: '_exec',
+      value: function _exec(name, first) {
+        var _this5 = this
+
+        if (first && typeof first.persist === 'function') {
+          first.persist()
+        }
+
+        return Promise.resolve()
+          .then(function() {
+            return _this5._throwIfNotActive('_exec')
+          })
+          .then(function() {
+            var listenerObject = _this5._listeners.get(name)
+
+            if (!listenerObject) {
+              throw new Error('methods.dispatch name is not added')
+            }
+            var listener = listenerObject.listener,
+              render = listenerObject.render,
+              dispatch = listenerObject.dispatch
+
+            var _ref2 = _this5._reacts || {},
+              state = _ref2.state,
+              props = _ref2.props,
+              update = _ref2.update
+
+            return listener(first, {
+              render: render,
+              dispatch: dispatch,
+              state: state,
+              props: props,
+              update: update
+            })
+          })
       }
     },
     {
       key: '_throwIfNotActive',
       value: function _throwIfNotActive(fnName) {
-        if (!this.active) {
+        if (!this.active()) {
           throw new Error('not active but ' + fnName + '()')
         }
+      }
+    },
+    {
+      key: 'list',
+      value: function list() {
+        var list = {}
+        var entries = [].concat(toConsumableArray(this._listeners.entries()))
+        entries.forEach(function(_ref3) {
+          var _ref4 = slicedToArray(_ref3, 2),
+            name = _ref4[0],
+            listenerObject = _ref4[1]
+
+          list[name] = listenerObject.list
+        })
+        return list
       }
     }
   ])

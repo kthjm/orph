@@ -7,10 +7,13 @@
 [![cdn](https://img.shields.io/badge/jsdelivr-latest-e84d3c.svg?style=flat-square)](https://cdn.jsdelivr.net/npm/orph/dist/orph.min.js)
 
 ## Installation
+
 ```shell
 yarn add orph
 ```
+
 ## Usage
+
 ```js
 import React from 'react'
 
@@ -20,56 +23,80 @@ import listener2 from './listener2'
 import listener3 from './listener3'
 
 const orph = new Orph([
-    ['NAME_1', listener1],
-    ['NAME_2', listener2, { states: [ 'bar' ] }]
+  ['NAME_1', listener1],
+  ['NAME_2', listener2, { states: ['bar'] }]
 ])
 
-orph.add('NAME_3', listener3, { dispatches: [ 'NAME_1' ] })
+orph.add('NAME_3', listener3, { dispatches: ['NAME_1'] })
 
 export default class Root extends React.Component {
-    constructor(props){
-        super(props)
-        this.state = { foo: true, bar: 0 }
-    }
-    componentWillMount(){
-        orph.attach(this)
-        this.divOnClick = orph.create('NAME_3')
-    }
-    render(){
-        return <div onClick={this.divOnClick} />
-    }
-    componentDidMount(){
-        orph.dispatch('NAME_2', {/* data */})
-    }
-    componentWillUnmount(){
-        orph.detach()
-    }
+  constructor(props) {
+    super(props)
+    this.state = { foo: true, bar: 0 }
+  }
+  componentWillMount() {
+    orph.attach(this)
+    this.divOnClick = orph.create('NAME_3')
+  }
+  render() {
+    return <div onClick={this.divOnClick} />
+  }
+  componentDidMount() {
+    orph.dispatch('NAME_2', {})
+  }
+  componentWillUnmount() {
+    orph.detach()
+  }
 }
 ```
+
 ```js
-const listener = (e | data, methods) => {
-    methods.props()
-    methods.state()
-    methods.render()
-    methods.dispatch()
+const listener = (e | data, utils) => {
+    utils.props()
+    utils.state()
+    utils.render()
+    utils.dispatch()
+    utils.update()
 }
 ```
+
 ## API
+
 ### new Orph()
-#### `.add()`
+
+#### `.add(name, listener, options)`
+
 ##### options
-###### `states`
-###### `dispatches`
-#### `.attach()`
+
+* `states`
+* `dispatches`
+
+#### `.attach(react)`
+
 #### `.detach()`
-#### `.create()`
-#### `.dispatch()`
+
+#### `.create(name)`
+
+#### `.dispatch(name[, packet])`
+
 #### `.list()`
 
-### methods as second argument
+### Utils as second argument
+
 #### `props()`
+
 #### `state()`
+
+#### `dispatch(name[, packet])`
+
 #### `render()`
-#### `dispatch()`
+
+pass arg to `setState`
+
+#### `update()`
+
+pass arg to `forceUpdate`
+
 ## License
+
 MIT (http://opensource.org/licenses/MIT)

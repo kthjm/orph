@@ -1,6 +1,6 @@
 {
   "name": "orph",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "repository": "kthjm/orph",
   "author": "kthjm <toxictoxer@gmail.com>",
   "license": "MIT",
@@ -9,6 +9,11 @@
   "module": "dist/orph.es.js",
   "description": "Is this the MVC...???",
   "keywords": [],
+  "prettier": {
+    "tabWidth": 2,
+    "semi": false,
+    "singleQuote": true
+  },
   "nyc": {
     "require": ["babel-register", "jsdom-global/register"],
     "include": ["src"],
@@ -24,49 +29,43 @@
     "process:cjs": "node dist/orph.cjs.js",
     "process:min": "node dist/orph.min.js",
     "process": "run-p process:cjs process:min",
-    "format": "prettier --write **/*.js package.json",
+    "format": "prettier --write **/*.js package.json README.md",
     "copy": "flow-copy-source --verbose src dist",
-    "report": "nyc report --reporter=lcov",
-    "codecov": "codecov",
-    "coverage": "run-s report codecov"
+    "coverage": "nyc report --reporter=lcov && codecov"
   },
   "devDependencies": {
     "babel-core": "^6.26.0",
     "babel-plugin-array-includes": "^2.0.3",
-    "babel-plugin-istanbul": "^4.1.4",
-    "babel-preset-env": "^1.6.0",
+    "babel-plugin-istanbul": "^4.1.5",
+    "babel-preset-env": "^1.6.1",
     "babel-preset-es2015-rollup": "^3.0.0",
     "babel-preset-flow": "^6.23.0",
     "babel-preset-power-assert": "^1.0.0",
     "babel-preset-react": "^6.24.1",
     "codecov": "^3.0.0",
-    "cross-env": "^5.0.1",
-    "enzyme": "^3.1.0",
-    "enzyme-adapter-react-16": "^1.0.1",
-    "flow-bin": "^0.47.0",
+    "cross-env": "^5.1.1",
+    "enzyme": "^3.2.0",
+    "enzyme-adapter-react-16": "^1.1.0",
+    "flow-bin": "^0.60.1",
     "flow-copy-source": "^1.2.1",
-    "jsdom": "^11.3.0",
+    "jsdom": "^11.5.1",
     "jsdom-global": "^3.0.2",
-    "mocha": "^3.4.2",
-    "npm-run-all": "^4.0.2",
-    "nyc": "^11.0.2",
-    "power-assert": "^1.4.2",
-    "prettier": "^1.7.4",
-    "react": "^16.0.0",
-    "react-dom": "^16.0.0",
-    "react-test-renderer": "^16.0.0",
+    "mocha": "^4.0.1",
+    "npm-run-all": "^4.1.2",
+    "nyc": "^11.3.0",
+    "power-assert": "^1.4.4",
+    "prettier": "^1.8.2",
+    "react": "^16.2.0",
+    "react-dom": "^16.2.0",
+    "react-test-renderer": "^16.2.0",
     "rollup": "^0.52.0",
     "rollup-plugin-babel": "^3.0.2",
     "rollup-plugin-flow": "^1.1.1",
     "rollup-plugin-uglify": "^2.0.1",
-    "uglify-es": "^3.2.0"
+    "sinon": "^4.1.2",
+    "uglify-es": "^3.2.1"
   },
   "peerDependencies": {
     "react": "^16.0.0"
-  },
-  "prettier": {
-    "tabWidth": 2,
-    "semi": false,
-    "singleQuote": true
   }
 }
