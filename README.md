@@ -52,11 +52,11 @@ export default class Root extends React.Component {
 
 ```js
 const listener = (e | data, utils) => {
-    utils.props()
-    utils.state()
-    utils.render()
-    utils.dispatch()
-    utils.update()
+  utils.props()
+  utils.state()
+  utils.render()
+  utils.dispatch()
+  utils.update()
 }
 ```
 
