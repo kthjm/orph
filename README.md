@@ -6,6 +6,8 @@
 [![Coverage Status](https://img.shields.io/codecov/c/github/kthjm/orph.svg?style=flat-square)](https://codecov.io/github/kthjm/orph)
 [![cdn](https://img.shields.io/badge/jsdelivr-latest-e84d3c.svg?style=flat-square)](https://cdn.jsdelivr.net/npm/orph/dist/orph.min.js)
 
+Design actions by restricting authority.
+
 ## Installation
 
 ```shell
@@ -15,87 +17,119 @@ yarn add orph
 ## Usage
 
 ```js
-import React from 'react'
-
+import React, { Component } from 'react'
 import Orph from 'orph'
-import listener1 from './listener1'
-import listener2 from './listener2'
-import listener3 from './listener3'
 
-const orph = new Orph([
-  ['NAME_1', listener1],
-  ['NAME_2', listener2, { states: ['bar'] }]
-])
+const store = new Orph({ count: 0 })
 
-orph.add('NAME_3', listener3, { dispatches: ['NAME_1'] })
+store.register({
+  UP: (e, { state, render }) => render({ count: state('count') + 1 }),
+  DOWN: (e, { state, render }) => render({ count: state('count') - 1 })
+},{
+  prefix: 'RENDER:',
+  use: { state: true, render: true }
+})
 
-export default class Root extends React.Component {
+const listeners = store.order(['RENDER:UP', 'RENDER:DOWN'])
+
+class App extends Component {
   constructor(props) {
     super(props)
-    this.state = { foo: true, bar: 0 }
+    store.attach(this)
   }
-  componentWillMount() {
-    orph.attach(this)
-    this.divOnClick = orph.create('NAME_3')
-  }
-  render() {
-    return <div onClick={this.divOnClick} />
-  }
-  componentDidMount() {
-    orph.dispatch('NAME_2', {})
-  }
-  componentWillUnmount() {
-    orph.detach()
-  }
-}
-```
 
-```js
-const listener = (e | data, utils) => {
-  utils.props()
-  utils.state()
-  utils.render()
-  utils.dispatch()
-  utils.update()
+  render() {
+    const { count } = this.state
+
+    return (
+      <main>
+        <h1>{count}</h1>
+        <button onClick={listeners['RENDER:UP']}>+</button>
+        <button onClick={listeners['RENDER:DOWN']}>-</button>
+      </main>
+    )
+  }
+
+  componentWillUnmount() {
+    store.detach(true)
+  }
 }
 ```
 
 ## API
 
-### new Orph()
+#### `new Orph(initialState)`
 
-#### `.add(name, listener, options)`
+`initialState` is set to react when attached.
+
+#### `.register(actions, options)`
 
 ##### options
 
-* `states`
-* `dispatches`
+* `prefix` string added to name head.
+
+* `use`
+
+For restricting authority.
+```js
+{
+  FOO: (data, { render }) => console.log(render) // undefined
+},{
+  use: {
+    dispatch: true
+  }
+}
+```
+
+#### `.order(Array<name>)`
 
 #### `.attach(react)`
 
-#### `.detach()`
+set `initialState` as `react.state`.
 
-#### `.create(name)`
+#### `.detach(save: boolean)`
 
-#### `.dispatch(name[, packet])`
+used in `componentWillUnmount`. if `save`, set `react.state` as `initialState`.
+
+#### `.dispatch(name[, data])`
+
+same as below.
 
 #### `.list()`
 
-### Utils as second argument
+### Use
 
-#### `props()`
+#### `props(name[, reference])`
 
-#### `state()`
-
-#### `dispatch(name[, packet])`
+#### `state(name[, reference])`
+cloned by default.
+if `reference` is `true`, not be cloned that is passed directly.
 
 #### `render()`
 
-pass arg to `setState`
+pass arg to `setState`. this function doesn't change `initialState`.
 
 #### `update()`
 
 pass arg to `forceUpdate`
+
+#### `dispatch(name[, data])`
+
+the result is passed by `then`.
+
+```js
+{
+  THOUSAND_TIMES: ({ count }, { dispatch }) => count * 1000,
+  BUTTON_CLICK: (n, { props, dispatch }) =>
+    dispatch('UTIL:THOUSAND_TIMES', { count: props('count') })
+    .then((multiplied) => dispatch('RENDER:COUNT', multiplied))
+},{
+  prefix: 'UTIL:',
+  use: { dispatch: true, props: true }
+}
+```
+
+All functions that registerd can be connected by `dispatch`.
 
 ## License
 
