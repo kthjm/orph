@@ -1,6 +1,6 @@
 {
   "name": "orph",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "repository": "kthjm/orph",
   "author": "kthjm <toxictoxer@gmail.com>",
   "license": "MIT",
@@ -8,7 +8,7 @@
   "jsnext:main": "dist/orph.es.js",
   "module": "dist/orph.es.js",
   "description": "Design actions by restricting authority.",
-  "keywords": [],
+  "keywords": ["react", "store"],
   "prettier": {
     "tabWidth": 2,
     "semi": false,

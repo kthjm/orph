@@ -23,35 +23,38 @@ import Orph from 'orph'
 const store = new Orph({ count: 0 })
 
 store.register({
-  UP: (e, { state, render }) => render({ count: state('count') + 1 }),
-  DOWN: (e, { state, render }) => render({ count: state('count') - 1 })
+  UP: (e, { state, render }) =>
+    state('count')
+    .then(count => count + 1)
+    .then(count => render({ count })),
+
+  DOWN: (e, { state, render }) =>
+    state('count')
+    .then(count => count - 1)
+    .then(count => render({ count })),
 },{
   prefix: 'RENDER:',
   use: { state: true, render: true }
 })
 
-const listeners = store.order(['RENDER:UP', 'RENDER:DOWN'])
+const listeners = store.order()
 
 class App extends Component {
   constructor(props) {
     super(props)
-    store.attach(this)
+    store.attach(this, { inherit: true })
   }
-
+  componentWillUnmount() {
+    store.detach()
+  }
   render() {
-    const { count } = this.state
-
     return (
       <main>
-        <h1>{count}</h1>
+        <h1>{this.state.count}</h1>
         <button onClick={listeners['RENDER:UP']}>+</button>
         <button onClick={listeners['RENDER:DOWN']}>-</button>
       </main>
     )
-  }
-
-  componentWillUnmount() {
-    store.detach(true)
   }
 }
 ```
@@ -60,17 +63,20 @@ class App extends Component {
 
 #### `new Orph(initialState)`
 
-`initialState` is set to react when attached.
+`initialState` is set to react when attached and will be never changed.
 
-#### `.register(actions, options)`
+#### `Orph.prototype.register(actions, options)`
 
 ##### options
 
-* `prefix` string added to name head.
-
 * `use`
 
-For restricting authority.
+required to restrict authority of use.
+
+* `prefix`
+
+string added to name head.
+
 ```js
 {
   FOO: (data, { render }) => console.log(render) // undefined
@@ -81,42 +87,52 @@ For restricting authority.
 }
 ```
 
-#### `.order(Array<name>)`
+#### `Orph.prototype.order(void | Array<name>): { [name]: listener }`
+return object contain listener format function.
+```js
+store.register({
+  FOO: (data, { render }) => {}
+},{
+  use: { render: true }
+})
 
-#### `.attach(react)`
+const listeners = store.order()
+// listeners['FOO']: (e) => store.dispatch('FOO', e)
+```
 
-set `initialState` as `react.state`.
+#### `Orph.prototype.attach(react, options)`
+used in `constructor`.
 
-#### `.detach(save: boolean)`
+##### options
+* `inherit`: boolean
+set `preState` to `react.state`.
 
-used in `componentWillUnmount`. if `save`, set `react.state` as `initialState`.
+#### `Orph.prototype.detach()`
+used in `componentWillUnmount`. Extract instance state as `preState`.
 
-#### `.dispatch(name[, data])`
-
+#### `Orph.prototype.dispatch(name[, data]): Promise<Action$Result>`
 same as below.
 
-#### `.list()`
+#### `Orph.prototype.list(): { [name]: useKeys }`
+util for debug.
+
+#### `Orph.prototype.getLatestState(key[, reference]): StateValue`
 
 ### Use
 
-#### `props(name[, reference])`
-
-#### `state(name[, reference])`
+#### `props(key[, reference]): Promise<PropsValue>`
+#### `state(key[, reference]): Promise<StateValue>`
 cloned by default.
 if `reference` is `true`, not be cloned that is passed directly.
 
-#### `render()`
+#### `render(): Promise<void>`
+pass arg to `setState`.
 
-pass arg to `setState`. this function doesn't change `initialState`.
-
-#### `update()`
-
+#### `update(): Promise<void>`
 pass arg to `forceUpdate`
 
-#### `dispatch(name[, data])`
-
+#### `dispatch(name[, data]): Promise<Action$Result>`
 the result is passed by `then`.
-
 ```js
 {
   THOUSAND_TIMES: ({ count }, { dispatch }) => count * 1000,
@@ -128,8 +144,15 @@ the result is passed by `then`.
   use: { dispatch: true, props: true }
 }
 ```
+All functions registerd can be connected by `dispatch`.
 
-All functions that registerd can be connected by `dispatch`.
+#### `.catch(err)`
+`Use` process will be canceled if run after `Orph.prototype.detach`.
+```js
+state('key')
+.then(value => console.log(value))
+.catch(err => console.log(err)) // { isDetached: true }
+```
 
 ## License
 

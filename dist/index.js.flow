@@ -1,11 +1,43 @@
 // @flow
-const USE_KEYS = ['props', 'state', 'render', 'update', 'dispatch']
+type Name = string
+type Data = any
+type Action = (
+  data: Data,
+  use: {
+    props?: CancelableFn<Props>,
+    state?: CancelableFn<State>,
+    render?: CancelableFn<void>,
+    update?: CancelableFn<void>,
+    dispatch?: Dispatch
+  }
+) => Action$Result
+type Action$Result = any
+type Dispatch = (name: Name, data: Data) => Dispatch$Result
+type Dispatch$Result = CancelableFn$Result<Action$Result>
+type UseKeys = Array<string>
+type ActionObject = {
+  action: CancelableFn<Action$Result>,
+  useKeys: UseKeys
+}
 
+type Listener = (e: SyntheticEvent<EventTarget>) => void
+type Listeners = { [name: Name]: Listener }
+
+type PropsValue = any
+type StateValue = any
+type Props = { [key: any]: PropsValue }
+type State = { [key: any]: StateValue }
+type React = React$Component<Props, State>
+
+type CancelableFn<R> = (...arg: any) => CancelableFn$Result<R>
+type CancelableFn$Result<R> = Promise<R | Canceled>
+type Canceled = { isDetached: true }
+
+const REACT_KEYS = ['props', 'state', 'render', 'update']
+const USABLE_KEYS = REACT_KEYS.concat(['dispatch'])
+
+const isReturn = (data: any): %checks => typeof data !== 'object' || data === null
 const isArr = Array.isArray
-const isFnc = (data: any): boolean => typeof data === 'function'
-const isReturn = (data: any): boolean =>
-  typeof data !== 'object' || data === null
-
 const cloneByRecursive = (data: any): any =>
   isReturn(data)
     ? data
@@ -18,58 +50,158 @@ const cloneByRecursive = (data: any): any =>
           return obj
         })({})
 
+const isObj = (data: any): %checks => typeof data === 'object' && !isArr(data) && data !== null
+const isFnc = (data: any): %checks => typeof data === 'function'
+const isThrow = (condition): %checks => condition
+
 const throwing = (condition: boolean, message: string): void => {
-  if (condition) {
+  if (isThrow(condition)) {
     throw new Error(message)
   }
 }
 
 export default class Orph {
-  _initialState: any
-  _orphans: Map<Name, OrphanObject>
-  _use: Use
-  _escapeState: () => any
+  _actions: Map<Name, ActionObject>
+  _initialState: State
+  _preState: State
+  _escapeState: () => State
+  _use: {
+    dispatch: Dispatch,
+    props?: CancelableFn<Props>,
+    state?: CancelableFn<State>,
+    render?: CancelableFn<void>,
+    update?: CancelableFn<void>
+  }
 
   constructor(initialState: any): void {
+    throwing(
+      !isObj(initialState),
+      'Orph.prototype.constructor requires argument as "object" not others'
+    )
+
+    this._actions = new Map()
     this._initialState = cloneByRecursive(initialState)
-    this._orphans = new Map()
-    this._use = {}
+    this._use = { dispatch: (name, data) => this.dispatch(name, data) }
   }
 
-  register(actions: Actions, options: Add$Options) {
-    const use = options.use || {}
-    const useKeys = Object.keys(use).filter(
-      key => USE_KEYS.includes(key) && use[key]
+  _fnToCancelable(fn: (...arg: any) => any): CancelableFn<any> {
+    return (...arg) =>
+      new Promise((resolve, reject) =>
+        this._isAttached()
+          ? resolve(fn(...arg))
+          : reject({ isDetached: true })
+      )
+  }
+
+  register(
+    actions: { [name: Name]: Action },
+    options: {
+      prefix?: string,
+      use: {
+        props?: boolean,
+        state?: boolean,
+        render?: boolean,
+        update?: boolean,
+        dispatch?: boolean
+      }
+    }) {
+    throwing(
+      !isObj(actions),
+      'Orph.prototype.register requires first argument as "object" not others'
+    )
+    throwing(
+      !isObj(options),
+      'Orph.prototype.register requires second argument as "object" not others'
+    )
+    throwing(
+      !isObj(options.use),
+      'Orph.prototype.register second argument requires "use" property as "object" not others'
     )
 
-    // set orphans
-    const { prefix } = options
+    const { use } = options
+    const useKeys = Object.keys(use).filter(key => USABLE_KEYS.includes(key) && use[key] === true)
+    const prefix = options.prefix || ''
     Object.entries(actions).forEach(
-      ([name, orphan]) =>
-        typeof orphan === 'function' &&
-        this._orphans.set(`${prefix || ''}${name}`, { orphan, useKeys })
+      ([name, action]) =>
+        isFnc(action) &&
+        this._actions.set(`${prefix}${name}`, {
+          useKeys,
+          action: this._fnToCancelable(action)
+        })
     )
   }
 
-  order(names: Array<Name> = []): Orphans$Created {
-    const orphans = {}
-    names.forEach(name => {
-      orphans[name] = e => this.dispatch(name, e)
+  order(names?: Array<Name>): Listeners {
+    throwing(
+      Boolean(names) && !isArr(names),
+      'Orph.prototype.order requires argument as "array"'
+    )
+
+    const listeners: Listeners = {}
+    const orderNames: any = names || [...this._actions.keys()]
+    ;(orderNames: Array<Name>)
+
+    orderNames.forEach(name => {
+      listeners[name] = e => {
+        if (isFnc(e.persist)) e.persist()
+        this.dispatch(name, e)
+      }
     })
-    return orphans
+
+    return listeners
+  }
+
+  list(): { [key: Name]: UseKeys } {
+    const list = {}
+    ;[...this._actions.entries()].forEach(([name, { useKeys }]) => {
+      list[name] = useKeys
+    })
+    return list
+  }
+
+  attach(r: React, options: { inherit?: boolean } = {}): void {
+    throwing(!isFnc(r.setState), `orph.attach must be passed react`)
+
+    this._escapeState = () => r.state
+
+    ;[
+      ['props', (name, reference) => reference ? r.props[name] : cloneByRecursive(r.props[name])],
+      ['state', (name, reference) => reference ? r.state[name] : cloneByRecursive(r.state[name])],
+      ['render', (partialState, callback) => r.setState(partialState, callback)],
+      ['update', callback => r.forceUpdate(callback)]
+    ].forEach(([key, fn]) => {
+      this._use[key] = this._fnToCancelable(fn)
+    })
+
+    r.state = options.inherit ? this._existState() : this._initialState
+  }
+
+  detach(): void {
+    this._preState = this._escapeState()
+    delete this._escapeState
+    REACT_KEYS.forEach(key => delete this._use[key])
+  }
+
+  _existState() {
+    return this._preState || this._initialState
+  }
+
+  _isAttached(): boolean {
+    return isFnc(this._escapeState)
   }
 
   dispatch(name: Name, data: Data): Dispatch$Result {
-    throwing(!this._orphans.has(name), `${name} is not added`)
+    throwing(
+      !this._actions.has(name),
+      `Orph.prototype.dispatch passed ${name} as name that is not retisterd`
+    )
 
-    if (data && isFnc(data.persist)) data.persist()
-
-    const orphanObject: any = this._orphans.get(name)
-    ;(orphanObject: OrphanObject)
-
-    const { orphan, useKeys } = orphanObject
-    const use = this._createUse(useKeys)
-    return Promise.resolve(orphan(data, use))
+    const actionObject: any = this._actions.get(name)
+    ;(actionObject: ActionObject)
+    return actionObject.action(
+      data,
+      this._createUse(actionObject.useKeys)
+    )
   }
 
   _createUse(useKeys: UseKeys) {
@@ -80,84 +212,11 @@ export default class Orph {
     return use
   }
 
-  attach(r: React): void {
-    throwing(!isFnc(r.setState), `orph.attach must be passed react`)
+  getLatestState(key: string, reference?: boolean): StateValue {
+    const referenceValue = this._isAttached()
+      ? this._escapeState()[key]
+      : this._existState()[key]
 
-    this._use.props = (name, reference) =>
-      reference ? r.props[name] : cloneByRecursive(r.props[name])
-    this._use.state = (name, reference) =>
-      reference ? r.state[name] : cloneByRecursive(r.state[name])
-    this._use.render = (partialState, callback) =>
-      r.setState(partialState, callback)
-    this._use.update = callback => r.forceUpdate(callback)
-    this._use.dispatch = (name, data) => this.dispatch(name, data)
-
-    r.state = this._initialState
-    this._escapeState = () => r.state
+    return reference ? referenceValue : cloneByRecursive(referenceValue)
   }
-
-  detach(save: boolean): void {
-    this._initialState = save ? this._escapeState() : this._initialState
-    Object.keys(this._use).forEach(key => delete this._use[key])
-    delete this._escapeState
-  }
-
-  list(): { [key: Name]: UseKeys } {
-    const list = {}
-    ;[...this._orphans.entries()].forEach(([name, { useKeys }]) => {
-      list[name] = useKeys
-    })
-    return list
-  }
-}
-
-type Name = string
-type Orphan$Result = any
-type Orphan = (data: Data, methods: Use) => Orphan$Result
-type Use = {
-  props?: PropsFn,
-  state?: StateFn,
-  render?: SetState,
-  update?: ForceUpdate,
-  dispatch?: Dispatch
-}
-
-type Actions = { [name: Name]: Orphan }
-type Add$Options = {
-  prefix?: string,
-  use: {
-    props?: boolean,
-    state?: boolean,
-    render?: boolean,
-    update?: boolean,
-    dispatch?: boolean
-  }
-}
-
-type Dispatch = (name: Name, data: Data) => Dispatch$Result
-type UseKeys = Array<string>
-
-type Orphans$Created = {
-  [name: Name]: (e: Data) => Dispatch$Result
-}
-
-type OrphanObject = {
-  orphan: Orphan,
-  useKeys: UseKeys
-}
-
-type Dispatch$Result = Promise<Orphan$Result>
-type Data = any
-type StateFn = () => State
-type PropsFn = () => Props
-type Render$Callback = () => mixed
-type SetState = (partialState: State, callback: Render$Callback) => void
-type ForceUpdate = (callback: Render$Callback) => void
-type State = any
-type Props = any
-type React = {
-  state: State,
-  props: Props,
-  setState: SetState,
-  forceUpdate: ForceUpdate
 }

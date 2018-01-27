@@ -92,19 +92,17 @@ var toConsumableArray = function(arr) {
 }
 
 //
-var USE_KEYS = ['props', 'state', 'render', 'update', 'dispatch']
 
-var isArr = Array.isArray
-var isFnc = function isFnc(data) {
-  return typeof data === 'function'
-}
+var REACT_KEYS = ['props', 'state', 'render', 'update']
+var USABLE_KEYS = REACT_KEYS.concat(['dispatch'])
+
 var isReturn = function isReturn(data) {
   return (
     (typeof data === 'undefined' ? 'undefined' : _typeof(data)) !== 'object' ||
     data === null
   )
 }
-
+var isArr = Array.isArray
 var cloneByRecursive = function cloneByRecursive(data) {
   return isReturn(data)
     ? data
@@ -120,45 +118,103 @@ var cloneByRecursive = function cloneByRecursive(data) {
         })({})
 }
 
+var isObj = function isObj(data) {
+  return (
+    (typeof data === 'undefined' ? 'undefined' : _typeof(data)) === 'object' &&
+    !isArr(data) &&
+    data !== null
+  )
+}
+var isFnc = function isFnc(data) {
+  return typeof data === 'function'
+}
+var isThrow = function isThrow(condition) {
+  return condition
+}
+
 var throwing = function throwing(condition, message) {
-  if (condition) {
+  if (isThrow(condition)) {
     throw new Error(message)
   }
 }
 
 var Orph = (function() {
   function Orph(initialState) {
+    var _this = this
+
     classCallCheck(this, Orph)
 
+    throwing(
+      !isObj(initialState),
+      'Orph.prototype.constructor requires argument as "object" not others'
+    )
+
+    this._actions = new Map()
     this._initialState = cloneByRecursive(initialState)
-    this._orphans = new Map()
-    this._use = {}
+    this._use = {
+      dispatch: function dispatch(name, data) {
+        return _this.dispatch(name, data)
+      }
+    }
   }
 
   createClass(Orph, [
     {
+      key: '_fnToCancelable',
+      value: function _fnToCancelable(fn) {
+        var _this2 = this
+
+        return function() {
+          for (
+            var _len = arguments.length, arg = Array(_len), _key = 0;
+            _key < _len;
+            _key++
+          ) {
+            arg[_key] = arguments[_key]
+          }
+
+          return new Promise(function(resolve, reject) {
+            return _this2._isAttached()
+              ? resolve(fn.apply(undefined, arg))
+              : reject({ isDetached: true })
+          })
+        }
+      }
+    },
+    {
       key: 'register',
       value: function register(actions, options) {
-        var _this = this
+        var _this3 = this
 
-        var use = options.use || {}
+        throwing(
+          !isObj(actions),
+          'Orph.prototype.register requires first argument as "object" not others'
+        )
+        throwing(
+          !isObj(options),
+          'Orph.prototype.register requires second argument as "object" not others'
+        )
+        throwing(
+          !isObj(options.use),
+          'Orph.prototype.register second argument requires "use" property as "object" not others'
+        )
+
+        var use = options.use
+
         var useKeys = Object.keys(use).filter(function(key) {
-          return USE_KEYS.indexOf(key) !== -1 && use[key]
+          return USABLE_KEYS.indexOf(key) !== -1 && use[key] === true
         })
-
-        // set orphans
-        var prefix = options.prefix
-
+        var prefix = options.prefix || ''
         Object.entries(actions).forEach(function(_ref) {
           var _ref2 = slicedToArray(_ref, 2),
             name = _ref2[0],
-            orphan = _ref2[1]
+            action = _ref2[1]
 
           return (
-            typeof orphan === 'function' &&
-            _this._orphans.set('' + (prefix || '') + name, {
-              orphan: orphan,
-              useKeys: useKeys
+            isFnc(action) &&
+            _this3._actions.set('' + prefix + name, {
+              useKeys: useKeys,
+              action: _this3._fnToCancelable(action)
             })
           )
         })
@@ -166,87 +222,25 @@ var Orph = (function() {
     },
     {
       key: 'order',
-      value: function order() {
-        var _this2 = this
-
-        var names =
-          arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : []
-
-        var orphans = {}
-        names.forEach(function(name) {
-          orphans[name] = function(e) {
-            return _this2.dispatch(name, e)
-          }
-        })
-        return orphans
-      }
-    },
-    {
-      key: 'dispatch',
-      value: function dispatch(name, data) {
-        throwing(!this._orphans.has(name), name + ' is not added')
-
-        if (data && isFnc(data.persist)) data.persist()
-
-        var orphanObject = this._orphans.get(name)
-        var orphan = orphanObject.orphan,
-          useKeys = orphanObject.useKeys
-
-        var use = this._createUse(useKeys)
-        return Promise.resolve(orphan(data, use))
-      }
-    },
-    {
-      key: '_createUse',
-      value: function _createUse(useKeys) {
-        var _this3 = this
-
-        var use = {}
-        useKeys.forEach(function(key) {
-          use[key] = _this3._use[key]
-        })
-        return use
-      }
-    },
-    {
-      key: 'attach',
-      value: function attach(r) {
+      value: function order(names) {
         var _this4 = this
 
-        throwing(!isFnc(r.setState), 'orph.attach must be passed react')
+        throwing(
+          Boolean(names) && !isArr(names),
+          'Orph.prototype.order requires argument as "array"'
+        )
 
-        this._use.props = function(name, reference) {
-          return reference ? r.props[name] : cloneByRecursive(r.props[name])
-        }
-        this._use.state = function(name, reference) {
-          return reference ? r.state[name] : cloneByRecursive(r.state[name])
-        }
-        this._use.render = function(partialState, callback) {
-          return r.setState(partialState, callback)
-        }
-        this._use.update = function(callback) {
-          return r.forceUpdate(callback)
-        }
-        this._use.dispatch = function(name, data) {
-          return _this4.dispatch(name, data)
-        }
-
-        r.state = this._initialState
-        this._escapeState = function() {
-          return r.state
-        }
-      }
-    },
-    {
-      key: 'detach',
-      value: function detach(save) {
-        var _this5 = this
-
-        this._initialState = save ? this._escapeState() : this._initialState
-        Object.keys(this._use).forEach(function(key) {
-          return delete _this5._use[key]
+        var listeners = {}
+        var orderNames =
+          names || [].concat(toConsumableArray(this._actions.keys()))
+        orderNames.forEach(function(name) {
+          listeners[name] = function(e) {
+            if (isFnc(e.persist)) e.persist()
+            _this4.dispatch(name, e)
+          }
         })
-        delete this._escapeState
+
+        return listeners
       }
     },
     {
@@ -254,7 +248,7 @@ var Orph = (function() {
       value: function list() {
         var list = {}
         ;[]
-          .concat(toConsumableArray(this._orphans.entries()))
+          .concat(toConsumableArray(this._actions.entries()))
           .forEach(function(_ref3) {
             var _ref4 = slicedToArray(_ref3, 2),
               name = _ref4[0],
@@ -263,6 +257,115 @@ var Orph = (function() {
             list[name] = useKeys
           })
         return list
+      }
+    },
+    {
+      key: 'attach',
+      value: function attach(r) {
+        var _this5 = this
+
+        var options =
+          arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {}
+
+        throwing(!isFnc(r.setState), 'orph.attach must be passed react')
+
+        this._escapeState = function() {
+          return r.state
+        }
+        ;[
+          [
+            'props',
+            function(name, reference) {
+              return reference ? r.props[name] : cloneByRecursive(r.props[name])
+            }
+          ],
+          [
+            'state',
+            function(name, reference) {
+              return reference ? r.state[name] : cloneByRecursive(r.state[name])
+            }
+          ],
+          [
+            'render',
+            function(partialState, callback) {
+              return r.setState(partialState, callback)
+            }
+          ],
+          [
+            'update',
+            function(callback) {
+              return r.forceUpdate(callback)
+            }
+          ]
+        ].forEach(function(_ref5) {
+          var _ref6 = slicedToArray(_ref5, 2),
+            key = _ref6[0],
+            fn = _ref6[1]
+
+          _this5._use[key] = _this5._fnToCancelable(fn)
+        })
+
+        r.state = options.inherit ? this._existState() : this._initialState
+      }
+    },
+    {
+      key: 'detach',
+      value: function detach() {
+        var _this6 = this
+
+        this._preState = this._escapeState()
+        delete this._escapeState
+        REACT_KEYS.forEach(function(key) {
+          return delete _this6._use[key]
+        })
+      }
+    },
+    {
+      key: '_existState',
+      value: function _existState() {
+        return this._preState || this._initialState
+      }
+    },
+    {
+      key: '_isAttached',
+      value: function _isAttached() {
+        return isFnc(this._escapeState)
+      }
+    },
+    {
+      key: 'dispatch',
+      value: function dispatch(name, data) {
+        throwing(
+          !this._actions.has(name),
+          'Orph.prototype.dispatch passed ' +
+            name +
+            ' as name that is not retisterd'
+        )
+
+        var actionObject = this._actions.get(name)
+        return actionObject.action(data, this._createUse(actionObject.useKeys))
+      }
+    },
+    {
+      key: '_createUse',
+      value: function _createUse(useKeys) {
+        var _this7 = this
+
+        var use = {}
+        useKeys.forEach(function(key) {
+          use[key] = _this7._use[key]
+        })
+        return use
+      }
+    },
+    {
+      key: 'getLatestState',
+      value: function getLatestState(key, reference) {
+        var referenceValue = this._isAttached()
+          ? this._escapeState()[key]
+          : this._existState()[key]
+
+        return reference ? referenceValue : cloneByRecursive(referenceValue)
       }
     }
   ])
