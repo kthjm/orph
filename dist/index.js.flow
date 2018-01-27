@@ -13,12 +13,9 @@ type Action = (
 ) => Action$Result
 type Action$Result = any
 type Dispatch = (name: Name, data: Data) => Dispatch$Result
-type Dispatch$Result = CancelableFn$Result<Action$Result>
+type Dispatch$Result = Promise<Action$Result>
 type UseKeys = Array<string>
-type ActionObject = {
-  action: CancelableFn<Action$Result>,
-  useKeys: UseKeys
-}
+type ActionObject = { action: Action, useKeys: UseKeys }
 
 type Listener = (e: SyntheticEvent<EventTarget>) => void
 type Listeners = { [name: Name]: Listener }
@@ -84,15 +81,6 @@ export default class Orph {
     this._use = { dispatch: (name, data) => this.dispatch(name, data) }
   }
 
-  _fnToCancelable(fn: (...arg: any) => any): CancelableFn<any> {
-    return (...arg) =>
-      new Promise((resolve, reject) =>
-        this._isAttached()
-          ? resolve(fn(...arg))
-          : reject({ isDetached: true })
-      )
-  }
-
   register(
     actions: { [name: Name]: Action },
     options: {
@@ -118,16 +106,15 @@ export default class Orph {
       'Orph.prototype.register second argument requires "use" property as "object" not others'
     )
 
-    const { use } = options
-    const useKeys = Object.keys(use).filter(key => USABLE_KEYS.includes(key) && use[key] === true)
     const prefix = options.prefix || ''
+    const useKeys = USABLE_KEYS.filter((key) => options.use[key] === true)
     Object.entries(actions).forEach(
       ([name, action]) =>
         isFnc(action) &&
-        this._actions.set(`${prefix}${name}`, {
-          useKeys,
-          action: this._fnToCancelable(action)
-        })
+        this._actions.set(
+          `${prefix}${name}`,
+          { useKeys, action }
+        )
     )
   }
 
@@ -164,16 +151,41 @@ export default class Orph {
 
     this._escapeState = () => r.state
 
-    ;[
-      ['props', (name, reference) => reference ? r.props[name] : cloneByRecursive(r.props[name])],
-      ['state', (name, reference) => reference ? r.state[name] : cloneByRecursive(r.state[name])],
-      ['render', (partialState, callback) => r.setState(partialState, callback)],
-      ['update', callback => r.forceUpdate(callback)]
-    ].forEach(([key, fn]) => {
-      this._use[key] = this._fnToCancelable(fn)
-    })
+    this._use.props = this._makeUseCancelable(
+      (name: string, reference?: boolean): Props =>
+        reference
+          ? r.props[name]
+          : cloneByRecursive(r.props[name])
+    )
+
+    this._use.state = this._makeUseCancelable(
+      (name: string, reference?: boolean): State =>
+        reference
+          ? r.state[name]
+          : cloneByRecursive(r.state[name])
+    )
+
+    this._use.render = this._makeUseCancelable(
+      (
+        partialState: $Shape<State> | ((State, Props) => $Shape<State> | void),
+        callback?: () => mixed
+      ): void => r.setState(partialState, callback)
+    )
+
+    this._use.update = this._makeUseCancelable(
+      (callback?: () => void): void => r.forceUpdate(callback)
+    )
 
     r.state = options.inherit ? this._existState() : this._initialState
+  }
+
+  _makeUseCancelable<R>(fn: (...arg: *) => R): CancelableFn<R> {
+    return (...arg) =>
+      new Promise((resolve, reject) =>
+        this._isAttached()
+          ? resolve(fn(...arg))
+          : reject({ isDetached: true })
+      )
   }
 
   detach(): void {
@@ -198,9 +210,12 @@ export default class Orph {
 
     const actionObject: any = this._actions.get(name)
     ;(actionObject: ActionObject)
-    return actionObject.action(
-      data,
-      this._createUse(actionObject.useKeys)
+
+    return Promise.resolve(
+      actionObject.action(
+        data,
+        this._createUse(actionObject.useKeys)
+      )
     )
   }
 

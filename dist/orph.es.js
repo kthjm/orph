@@ -160,31 +160,9 @@ var Orph = (function() {
 
   createClass(Orph, [
     {
-      key: '_fnToCancelable',
-      value: function _fnToCancelable(fn) {
-        var _this2 = this
-
-        return function() {
-          for (
-            var _len = arguments.length, arg = Array(_len), _key = 0;
-            _key < _len;
-            _key++
-          ) {
-            arg[_key] = arguments[_key]
-          }
-
-          return new Promise(function(resolve, reject) {
-            return _this2._isAttached()
-              ? resolve(fn.apply(undefined, arg))
-              : reject({ isDetached: true })
-          })
-        }
-      }
-    },
-    {
       key: 'register',
       value: function register(actions, options) {
-        var _this3 = this
+        var _this2 = this
 
         throwing(
           !isObj(actions),
@@ -199,12 +177,10 @@ var Orph = (function() {
           'Orph.prototype.register second argument requires "use" property as "object" not others'
         )
 
-        var use = options.use
-
-        var useKeys = Object.keys(use).filter(function(key) {
-          return USABLE_KEYS.indexOf(key) !== -1 && use[key] === true
-        })
         var prefix = options.prefix || ''
+        var useKeys = USABLE_KEYS.filter(function(key) {
+          return options.use[key] === true
+        })
         Object.entries(actions).forEach(function(_ref) {
           var _ref2 = slicedToArray(_ref, 2),
             name = _ref2[0],
@@ -212,9 +188,9 @@ var Orph = (function() {
 
           return (
             isFnc(action) &&
-            _this3._actions.set('' + prefix + name, {
+            _this2._actions.set('' + prefix + name, {
               useKeys: useKeys,
-              action: _this3._fnToCancelable(action)
+              action: action
             })
           )
         })
@@ -223,7 +199,7 @@ var Orph = (function() {
     {
       key: 'order',
       value: function order(names) {
-        var _this4 = this
+        var _this3 = this
 
         throwing(
           Boolean(names) && !isArr(names),
@@ -236,7 +212,7 @@ var Orph = (function() {
         orderNames.forEach(function(name) {
           listeners[name] = function(e) {
             if (isFnc(e.persist)) e.persist()
-            _this4.dispatch(name, e)
+            _this3.dispatch(name, e)
           }
         })
 
@@ -262,8 +238,6 @@ var Orph = (function() {
     {
       key: 'attach',
       value: function attach(r) {
-        var _this5 = this
-
         var options =
           arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {}
 
@@ -272,51 +246,60 @@ var Orph = (function() {
         this._escapeState = function() {
           return r.state
         }
-        ;[
-          [
-            'props',
-            function(name, reference) {
-              return reference ? r.props[name] : cloneByRecursive(r.props[name])
-            }
-          ],
-          [
-            'state',
-            function(name, reference) {
-              return reference ? r.state[name] : cloneByRecursive(r.state[name])
-            }
-          ],
-          [
-            'render',
-            function(partialState, callback) {
-              return r.setState(partialState, callback)
-            }
-          ],
-          [
-            'update',
-            function(callback) {
-              return r.forceUpdate(callback)
-            }
-          ]
-        ].forEach(function(_ref5) {
-          var _ref6 = slicedToArray(_ref5, 2),
-            key = _ref6[0],
-            fn = _ref6[1]
 
-          _this5._use[key] = _this5._fnToCancelable(fn)
+        this._use.props = this._makeUseCancelable(function(name, reference) {
+          return reference ? r.props[name] : cloneByRecursive(r.props[name])
+        })
+
+        this._use.state = this._makeUseCancelable(function(name, reference) {
+          return reference ? r.state[name] : cloneByRecursive(r.state[name])
+        })
+
+        this._use.render = this._makeUseCancelable(function(
+          partialState,
+          callback
+        ) {
+          return r.setState(partialState, callback)
+        })
+
+        this._use.update = this._makeUseCancelable(function(callback) {
+          return r.forceUpdate(callback)
         })
 
         r.state = options.inherit ? this._existState() : this._initialState
       }
     },
     {
+      key: '_makeUseCancelable',
+      value: function _makeUseCancelable(fn) {
+        var _this4 = this
+
+        return function() {
+          for (
+            var _len = arguments.length, arg = Array(_len), _key = 0;
+            _key < _len;
+            _key++
+          ) {
+            arg[_key] = arguments[_key]
+          }
+
+          return new Promise(function(resolve, reject) {
+            return _this4._isAttached()
+              ? resolve(fn.apply(undefined, arg))
+              : reject({ isDetached: true })
+          })
+        }
+      }
+    },
+    {
       key: 'detach',
       value: function detach() {
-        var _this6 = this
+        var _this5 = this
 
         this._preState = this._escapeState()
         delete this._escapeState
         REACT_KEYS.forEach(function(key) {
-          return delete _this6._use[key]
+          return delete _this5._use[key]
         })
       }
     },
@@ -343,17 +326,19 @@ var Orph = (function() {
         )
 
         var actionObject = this._actions.get(name)
-        return actionObject.action(data, this._createUse(actionObject.useKeys))
+        return Promise.resolve(
+          actionObject.action(data, this._createUse(actionObject.useKeys))
+        )
       }
     },
     {
       key: '_createUse',
       value: function _createUse(useKeys) {
-        var _this7 = this
+        var _this6 = this
 
         var use = {}
         useKeys.forEach(function(key) {
-          use[key] = _this7._use[key]
+          use[key] = _this6._use[key]
         })
         return use
       }

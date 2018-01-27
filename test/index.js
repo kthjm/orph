@@ -204,41 +204,6 @@ describe('e2e', () => {
     return
   })
 
-  it(`detach`, async () => {
-    const NAME = 'LISTENER'
-    const orph = new Orph({})
-
-    orph.register(
-      {
-        [NAME]: () => {
-          throw new Error('')
-        }
-      },
-      {
-        use: {}
-      }
-    )
-
-    class JustStub extends Component {
-      constructor(props) {
-        super(props)
-        orph.attach(this)
-      }
-      render() {
-        return false
-      }
-    }
-
-    Enzyme.mount(<JustStub />)
-    orph.detach()
-    try {
-      await orph.dispatch(NAME)
-    } catch (err) {
-      assert.deepEqual(err, { isDetached: true })
-    }
-    return
-  })
-
   it(`simulate("click")`, () => {
     const orph = new Orph({})
     const NAME = 'LISTENER'
