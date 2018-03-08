@@ -4,7 +4,7 @@ const flow = require('rollup-plugin-flow')
 const uglify = require('rollup-plugin-uglify')
 const { minify } = require('uglify-es')
 
-const input = `src/index.js`
+const input = `./index.js`
 const file = mid => `dist/orph.${mid}.js`
 
 const cjs_and_es = () =>

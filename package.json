@@ -1,6 +1,6 @@
 {
   "name": "orph",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "repository": "kthjm/orph",
   "author": "kthjm <toxictoxer@gmail.com>",
   "license": "MIT",
@@ -16,7 +16,6 @@
   },
   "nyc": {
     "require": ["babel-register", "jsdom-global/register"],
-    "include": ["src"],
     "sourceMap": false,
     "instrument": false
   },
@@ -25,12 +24,11 @@
     "test": "cross-env NODE_ENV=TEST nyc mocha",
     "prebuild": "yarn test",
     "build": "cross-env NODE_ENV=BUILD node rollup.config.all.js",
-    "postbuild": "run-s process format copy",
+    "postbuild": "run-s process format",
     "process:cjs": "node dist/orph.cjs.js",
     "process:min": "node dist/orph.min.js",
     "process": "run-p process:cjs process:min",
     "format": "prettier --write **/*.js package.json",
-    "copy": "flow-copy-source --verbose src dist",
     "coverage": "nyc report --reporter=lcov && codecov"
   },
   "devDependencies": {
@@ -47,7 +45,6 @@
     "enzyme": "^3.3.0",
     "enzyme-adapter-react-16": "^1.1.1",
     "flow-bin": "^0.63.1",
-    "flow-copy-source": "^1.2.1",
     "jsdom": "^11.5.1",
     "jsdom-global": "^3.0.2",
     "mocha": "^4.1.0",

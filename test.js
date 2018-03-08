@@ -1,4 +1,4 @@
-import Orph from '../src'
+import Orph from './index.js'
 import assert from 'power-assert'
 import sinon from 'sinon'
 import React, { Component } from 'react'
@@ -42,6 +42,7 @@ describe('Orph.prototype.register', () => {
         /Orph.prototype.register requires first argument as "object" not others/
       )
     ))
+
   it('!isObj(options) => throws', () =>
     excepts.forEach(options =>
       assert.throws(
@@ -49,6 +50,7 @@ describe('Orph.prototype.register', () => {
         /Orph.prototype.register requires second argument as "object" not others/
       )
     ))
+
   it('!isObj(options.use) => throws', () =>
     excepts.forEach(use =>
       assert.throws(
@@ -566,4 +568,18 @@ describe('Orph.prototype.getLatestState', () => {
     wrapper.unmount()
     assert.strictEqual(store.getLatestState('obj', true), nextObj)
   })
+})
+
+it('ordered function execed by empty argument', () => {
+  const orph = new Orph({})
+
+  orph.register({ TEST: () => assert(true) }, { use: {} })
+
+  const { TEST } = orph.order()
+
+  try {
+    TEST()
+  } catch (e) {
+    assert(false)
+  }
 })

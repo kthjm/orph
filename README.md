@@ -61,11 +61,11 @@ class App extends Component {
 
 ## API
 
-#### `new Orph(initialState)`
+#### new Orph(initialState)
 
 `initialState` is set to react when attached and will be never changed.
 
-#### `Orph.prototype.register(actions, options)`
+#### orph.register(actions, options)
 
 ##### options
 
@@ -87,7 +87,7 @@ string added to name head.
 }
 ```
 
-#### `Orph.prototype.order(void | Array<name>): { [name]: listener }`
+#### orph.order(void | Array<name>): { [name]: listener }
 return object contain listener format function.
 ```js
 store.register({
@@ -100,38 +100,38 @@ const listeners = store.order()
 // listeners['FOO']: (e) => store.dispatch('FOO', e)
 ```
 
-#### `Orph.prototype.attach(react, options)`
+#### orph.attach(react, options)
 used in `constructor`.
 
 ##### options
 * `inherit`: boolean
 set `preState` to `react.state`.
 
-#### `Orph.prototype.detach()`
+#### orph.detach()
 used in `componentWillUnmount`. Extract instance state as `preState`.
 
-#### `Orph.prototype.dispatch(name[, data]): Promise<Action$Result>`
+#### orph.dispatch(name[, data]): Promise<Action$Result>
 same as below.
 
-#### `Orph.prototype.list(): { [name]: useKeys }`
+#### orph.list(): { [name]: useKeys }
 util for debug.
 
-#### `Orph.prototype.getLatestState(key[, reference]): StateValue`
+#### orph.getLatestState(key[, reference]): StateValue
 
 ### Use
 
-#### `props(key[, reference]): Promise<PropsValue>`
-#### `state(key[, reference]): Promise<StateValue>`
+#### props(key[, reference]): Promise<PropsValue>
+#### state(key[, reference]): Promise<StateValue>
 cloned by default.
 if `reference` is `true`, not be cloned that is passed directly.
 
-#### `render(): Promise<void>`
+#### render(): Promise<void>
 pass arg to `setState`.
 
-#### `update(): Promise<void>`
+#### update(): Promise<void>
 pass arg to `forceUpdate`
 
-#### `dispatch(name[, data]): Promise<Action$Result>`
+#### dispatch(name[, data]): Promise<Action$Result>
 the result is passed by `then`.
 ```js
 {
@@ -146,8 +146,8 @@ the result is passed by `then`.
 ```
 All functions registerd can be connected by `dispatch`.
 
-#### `.catch(err)`
-`Use` process will be canceled if run after `Orph.prototype.detach`.
+#### .catch(err)
+`Use` process will be canceled if run after `orph.detach`.
 ```js
 state('key')
 .then(value => console.log(value))

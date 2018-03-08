@@ -128,12 +128,9 @@ var isObj = function isObj(data) {
 var isFnc = function isFnc(data) {
   return typeof data === 'function'
 }
-var isThrow = function isThrow(condition) {
-  return condition
-}
 
-var throwing = function throwing(condition, message) {
-  if (isThrow(condition)) {
+var asserts = function asserts(condition, message) {
+  if (!condition) {
     throw new Error(message)
   }
 }
@@ -144,8 +141,8 @@ var Orph = (function() {
 
     classCallCheck(this, Orph)
 
-    throwing(
-      !isObj(initialState),
+    asserts(
+      isObj(initialState),
       'Orph.prototype.constructor requires argument as "object" not others'
     )
 
@@ -164,16 +161,16 @@ var Orph = (function() {
       value: function register(actions, options) {
         var _this2 = this
 
-        throwing(
-          !isObj(actions),
+        asserts(
+          isObj(actions),
           'Orph.prototype.register requires first argument as "object" not others'
         )
-        throwing(
-          !isObj(options),
+        asserts(
+          isObj(options),
           'Orph.prototype.register requires second argument as "object" not others'
         )
-        throwing(
-          !isObj(options.use),
+        asserts(
+          isObj(options.use),
           'Orph.prototype.register second argument requires "use" property as "object" not others'
         )
 
@@ -201,8 +198,8 @@ var Orph = (function() {
       value: function order(names) {
         var _this3 = this
 
-        throwing(
-          Boolean(names) && !isArr(names),
+        asserts(
+          !names || isArr(names),
           'Orph.prototype.order requires argument as "array"'
         )
 
@@ -211,7 +208,7 @@ var Orph = (function() {
           names || [].concat(toConsumableArray(this._actions.keys()))
         orderNames.forEach(function(name) {
           listeners[name] = function(e) {
-            if (isFnc(e.persist)) e.persist()
+            if (isObj(e) && isFnc(e.persist)) e.persist()
             _this3.dispatch(name, e)
           }
         })
@@ -241,7 +238,7 @@ var Orph = (function() {
         var options =
           arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {}
 
-        throwing(!isFnc(r.setState), 'orph.attach must be passed react')
+        asserts(isFnc(r.setState), 'orph.attach must be passed react')
 
         this._escapeState = function() {
           return r.state
@@ -318,8 +315,8 @@ var Orph = (function() {
     {
       key: 'dispatch',
       value: function dispatch(name, data) {
-        throwing(
-          !this._actions.has(name),
+        asserts(
+          this._actions.has(name),
           'Orph.prototype.dispatch passed ' +
             name +
             ' as name that is not retisterd'

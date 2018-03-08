@@ -49,10 +49,9 @@ const cloneByRecursive = (data: any): any =>
 
 const isObj = (data: any): %checks => typeof data === 'object' && !isArr(data) && data !== null
 const isFnc = (data: any): %checks => typeof data === 'function'
-const isThrow = (condition): %checks => condition
 
-const throwing = (condition: boolean, message: string): void => {
-  if (isThrow(condition)) {
+const asserts = (condition: boolean, message: string): void => {
+  if (!condition) {
     throw new Error(message)
   }
 }
@@ -71,8 +70,8 @@ export default class Orph {
   }
 
   constructor(initialState: any): void {
-    throwing(
-      !isObj(initialState),
+    asserts(
+      isObj(initialState),
       'Orph.prototype.constructor requires argument as "object" not others'
     )
 
@@ -92,35 +91,33 @@ export default class Orph {
         update?: boolean,
         dispatch?: boolean
       }
-    }) {
-    throwing(
-      !isObj(actions),
+    }
+  ) {
+    asserts(
+      isObj(actions),
       'Orph.prototype.register requires first argument as "object" not others'
     )
-    throwing(
-      !isObj(options),
+    asserts(
+      isObj(options),
       'Orph.prototype.register requires second argument as "object" not others'
     )
-    throwing(
-      !isObj(options.use),
+    asserts(
+      isObj(options.use),
       'Orph.prototype.register second argument requires "use" property as "object" not others'
     )
 
     const prefix = options.prefix || ''
-    const useKeys = USABLE_KEYS.filter((key) => options.use[key] === true)
+    const useKeys = USABLE_KEYS.filter(key => options.use[key] === true)
     Object.entries(actions).forEach(
       ([name, action]) =>
         isFnc(action) &&
-        this._actions.set(
-          `${prefix}${name}`,
-          { useKeys, action }
-        )
+        this._actions.set(`${prefix}${name}`, { useKeys, action })
     )
   }
 
   order(names?: Array<Name>): Listeners {
-    throwing(
-      Boolean(names) && !isArr(names),
+    asserts(
+      !names || isArr(names),
       'Orph.prototype.order requires argument as "array"'
     )
 
@@ -130,7 +127,7 @@ export default class Orph {
 
     orderNames.forEach(name => {
       listeners[name] = e => {
-        if (isFnc(e.persist)) e.persist()
+        if (isObj(e) && isFnc(e.persist)) e.persist()
         this.dispatch(name, e)
       }
     })
@@ -147,22 +144,18 @@ export default class Orph {
   }
 
   attach(r: React, options: { inherit?: boolean } = {}): void {
-    throwing(!isFnc(r.setState), `orph.attach must be passed react`)
+    asserts(isFnc(r.setState), `orph.attach must be passed react`)
 
     this._escapeState = () => r.state
 
     this._use.props = this._makeUseCancelable(
       (name: string, reference?: boolean): Props =>
-        reference
-          ? r.props[name]
-          : cloneByRecursive(r.props[name])
+        reference ? r.props[name] : cloneByRecursive(r.props[name])
     )
 
     this._use.state = this._makeUseCancelable(
       (name: string, reference?: boolean): State =>
-        reference
-          ? r.state[name]
-          : cloneByRecursive(r.state[name])
+        reference ? r.state[name] : cloneByRecursive(r.state[name])
     )
 
     this._use.render = this._makeUseCancelable(
@@ -172,8 +165,8 @@ export default class Orph {
       ): void => r.setState(partialState, callback)
     )
 
-    this._use.update = this._makeUseCancelable(
-      (callback?: () => void): void => r.forceUpdate(callback)
+    this._use.update = this._makeUseCancelable((callback?: () => void): void =>
+      r.forceUpdate(callback)
     )
 
     r.state = options.inherit ? this._existState() : this._initialState
@@ -181,10 +174,11 @@ export default class Orph {
 
   _makeUseCancelable<R>(fn: (...arg: *) => R): CancelableFn<R> {
     return (...arg) =>
-      new Promise((resolve, reject) =>
-        this._isAttached()
-          ? resolve(fn(...arg))
-          : reject({ isDetached: true })
+      new Promise(
+        (resolve, reject) =>
+          this._isAttached()
+            ? resolve(fn(...arg))
+            : reject({ isDetached: true })
       )
   }
 
@@ -203,8 +197,8 @@ export default class Orph {
   }
 
   dispatch(name: Name, data: Data): Dispatch$Result {
-    throwing(
-      !this._actions.has(name),
+    asserts(
+      this._actions.has(name),
       `Orph.prototype.dispatch passed ${name} as name that is not retisterd`
     )
 
@@ -212,10 +206,7 @@ export default class Orph {
     ;(actionObject: ActionObject)
 
     return Promise.resolve(
-      actionObject.action(
-        data,
-        this._createUse(actionObject.useKeys)
-      )
+      actionObject.action(data, this._createUse(actionObject.useKeys))
     )
   }
 
