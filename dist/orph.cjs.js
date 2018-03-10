@@ -201,7 +201,7 @@ var Orph = (function() {
         var _this3 = this
 
         asserts(
-          !names || isArr(names),
+          isArr(names) || !names,
           'Orph.prototype.order requires argument as "array"'
         )
 
@@ -209,10 +209,10 @@ var Orph = (function() {
         var orderNames =
           names || [].concat(toConsumableArray(this._actions.keys()))
         orderNames.forEach(function(name) {
-          listeners[name] = function(e) {
+          return (listeners[name] = function(e) {
             if (isObj(e) && isFnc(e.persist)) e.persist()
-            _this3.dispatch(name, e)
-          }
+            return _this3.dispatch(name, e)
+          })
         })
 
         return listeners
@@ -229,7 +229,7 @@ var Orph = (function() {
               name = _ref4[0],
               useKeys = _ref4[1].useKeys
 
-            list[name] = useKeys
+            return (list[name] = useKeys)
           })
         return list
       }
@@ -325,9 +325,10 @@ var Orph = (function() {
         )
 
         var actionObject = this._actions.get(name)
-        return Promise.resolve(
-          actionObject.action(data, this._createUse(actionObject.useKeys))
-        )
+        var action = actionObject.action,
+          useKeys = actionObject.useKeys
+
+        return Promise.resolve(action(data, this._createUse(useKeys)))
       }
     },
     {
@@ -337,7 +338,7 @@ var Orph = (function() {
 
         var use = {}
         useKeys.forEach(function(key) {
-          use[key] = _this6._use[key]
+          return (use[key] = _this6._use[key])
         })
         return use
       }

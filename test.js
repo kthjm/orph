@@ -583,3 +583,15 @@ it('ordered function execed by empty argument', () => {
     assert(false)
   }
 })
+
+it('ordered function return promise object', () => {
+  const orph = new Orph({})
+
+  orph.register({ TEST: () => {} }, { use: {} })
+
+  const { TEST } = orph.order()
+
+  assert.deepEqual(TEST().constructor, Promise)
+  assert(typeof TEST().then === 'function')
+  assert(typeof TEST().catch === 'function')
+})

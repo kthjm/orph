@@ -117,7 +117,7 @@ export default class Orph {
 
   order(names?: Array<Name>): Listeners {
     asserts(
-      !names || isArr(names),
+      isArr(names) || !names,
       'Orph.prototype.order requires argument as "array"'
     )
 
@@ -125,21 +125,19 @@ export default class Orph {
     const orderNames: any = names || [...this._actions.keys()]
     ;(orderNames: Array<Name>)
 
-    orderNames.forEach(name => {
+    orderNames.forEach(name =>
       listeners[name] = e => {
         if (isObj(e) && isFnc(e.persist)) e.persist()
-        this.dispatch(name, e)
+        return this.dispatch(name, e)
       }
-    })
+    )
 
     return listeners
   }
 
   list(): { [key: Name]: UseKeys } {
     const list = {}
-    ;[...this._actions.entries()].forEach(([name, { useKeys }]) => {
-      list[name] = useKeys
-    })
+    ;[...this._actions.entries()].forEach(([name, { useKeys }]) => list[name] = useKeys)
     return list
   }
 
@@ -204,17 +202,14 @@ export default class Orph {
 
     const actionObject: any = this._actions.get(name)
     ;(actionObject: ActionObject)
+    const { action, useKeys } = actionObject
 
-    return Promise.resolve(
-      actionObject.action(data, this._createUse(actionObject.useKeys))
-    )
+    return Promise.resolve(action(data, this._createUse(useKeys)))
   }
 
   _createUse(useKeys: UseKeys) {
     const use = {}
-    useKeys.forEach(key => {
-      use[key] = this._use[key]
-    })
+    useKeys.forEach(key => use[key] = this._use[key])
     return use
   }
 
