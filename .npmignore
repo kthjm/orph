@@ -1,10 +1,10 @@
-src/
-test/
 .babelrc
 .flowconfig
 .gitignore
 .prettierignore
 .travis.yml
 codecov.yml
+index.js
 rollup.config.all.js
+test.js
 yarn.lock
