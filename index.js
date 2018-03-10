@@ -204,7 +204,12 @@ export default class Orph {
     ;(actionObject: ActionObject)
     const { action, useKeys } = actionObject
 
-    return Promise.resolve(action(data, this._createUse(useKeys)))
+    return Promise.resolve().then(() =>
+      action(
+        data,
+        this._createUse(useKeys)
+      )
+    )
   }
 
   _createUse(useKeys: UseKeys) {

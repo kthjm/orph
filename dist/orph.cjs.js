@@ -317,6 +317,8 @@ var Orph = (function() {
     {
       key: 'dispatch',
       value: function dispatch(name, data) {
+        var _this6 = this
+
         asserts(
           this._actions.has(name),
           'Orph.prototype.dispatch passed ' +
@@ -328,17 +330,19 @@ var Orph = (function() {
         var action = actionObject.action,
           useKeys = actionObject.useKeys
 
-        return Promise.resolve(action(data, this._createUse(useKeys)))
+        return Promise.resolve().then(function() {
+          return action(data, _this6._createUse(useKeys))
+        })
       }
     },
     {
       key: '_createUse',
       value: function _createUse(useKeys) {
-        var _this6 = this
+        var _this7 = this
 
         var use = {}
         useKeys.forEach(function(key) {
-          return (use[key] = _this6._use[key])
+          return (use[key] = _this7._use[key])
         })
         return use
       }
