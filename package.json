@@ -1,6 +1,6 @@
 {
   "name": "orph",
-  "version": "3.0.6",
+  "version": "3.0.7",
   "repository": "kthjm/orph",
   "author": "kthjm <toxictoxer@gmail.com>",
   "license": "MIT",
@@ -8,14 +8,15 @@
   "jsnext:main": "dist/orph.es.js",
   "module": "dist/orph.es.js",
   "description": "Design actions by restricting authority.",
-  "keywords": ["react", "store"],
-  "prettier": {
-    "tabWidth": 2,
-    "semi": false,
-    "singleQuote": true
-  },
+  "keywords": [
+    "react",
+    "store"
+  ],
   "nyc": {
-    "require": ["babel-register", "jsdom-global/register"],
+    "require": [
+      "babel-register",
+      "jsdom-global/register"
+    ],
     "sourceMap": false,
     "instrument": false
   },
@@ -23,12 +24,7 @@
     "pretest": "flow",
     "test": "cross-env NODE_ENV=TEST nyc mocha",
     "prebuild": "yarn test",
-    "build": "cross-env NODE_ENV=BUILD node rollup.config.all.js",
-    "postbuild": "run-s process format",
-    "process:cjs": "node dist/orph.cjs.js",
-    "process:min": "node dist/orph.min.js",
-    "process": "run-p process:cjs process:min",
-    "format": "prettier --write **/*.js package.json",
+    "build": "cross-env NODE_ENV=BUILD rollup -c",
     "coverage": "nyc report --reporter=lcov && codecov"
   },
   "devDependencies": {
@@ -51,13 +47,14 @@
     "npm-run-all": "^4.1.2",
     "nyc": "^11.4.1",
     "power-assert": "^1.4.4",
-    "prettier": "^1.10.2",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
     "react-test-renderer": "^16.2.0",
     "rollup": "^0.54.0",
+    "rollup-plugin-auto-external": "^1.2.0",
     "rollup-plugin-babel": "^3.0.3",
     "rollup-plugin-flow": "^1.1.1",
+    "rollup-plugin-prettier": "^0.4.0",
     "rollup-plugin-uglify": "^2.0.1",
     "sinon": "^4.1.5",
     "uglify-es": "^3.3.7"

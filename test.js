@@ -212,7 +212,8 @@ describe('e2e', () => {
 
     orph.register(
       {
-        [NAME]: async ({ resolve }, { update, render }) => {
+        [NAME]: async (e, { update, render }) => {
+
           const { componentDidUpdate } = DivOnClick.prototype
           assert.ok(componentDidUpdate.notCalled)
 
@@ -222,7 +223,7 @@ describe('e2e', () => {
             () =>
               render({}, () => {
                 assert.ok(componentDidUpdate.calledTwice)
-                resolve()
+                e.resolve()
               }),
             300
           )

@@ -2,15 +2,14 @@
   "env": {
     "TEST": {
       "presets": [
-        ["env", { "targets": { "browsers": ["last 2 Chrome versions"] } }],
+        ["env", { "targets": { "node": "current" } }],
         "power-assert",
         "react"
       ],
       "plugins": ["istanbul"]
     },
     "BUILD": {
-      "presets": ["es2015-rollup"],
-      "plugins": ["array-includes"]
+      "presets": [["env", { "targets": { "browsers": ["last 2 versions", "safari >= 7"] }, "modules": false }]]
     }
   }
 }

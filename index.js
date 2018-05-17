@@ -33,7 +33,7 @@ type Canceled = { isDetached: true }
 const REACT_KEYS = ['props', 'state', 'render', 'update']
 const USABLE_KEYS = REACT_KEYS.concat(['dispatch'])
 
-const isReturn = (data: any): %checks => typeof data !== 'object' || data === null
+const isReturn = (data: any): boolean %checks => typeof data !== 'object' || data === null
 const isArr = Array.isArray
 const cloneByRecursive = (data: any): any =>
   isReturn(data)
@@ -47,8 +47,8 @@ const cloneByRecursive = (data: any): any =>
           return obj
         })({})
 
-const isObj = (data: any): %checks => typeof data === 'object' && !isArr(data) && data !== null
-const isFnc = (data: any): %checks => typeof data === 'function'
+const isObj = (data: any): boolean %checks => typeof data === 'object' && !isArr(data) && data !== null
+const isFnc = (data: any): boolean %checks => typeof data === 'function'
 
 const asserts = (condition: boolean, message: string): void => {
   if (!condition) {
@@ -125,12 +125,7 @@ export default class Orph {
     const orderNames: any = names || [...this._actions.keys()]
     ;(orderNames: Array<Name>)
 
-    orderNames.forEach(name =>
-      listeners[name] = e => {
-        if (isObj(e) && isFnc(e.persist)) e.persist()
-        return this.dispatch(name, e)
-      }
-    )
+    orderNames.forEach(name => listeners[name] = e => this.dispatch(name, e))
 
     return listeners
   }
@@ -200,16 +195,20 @@ export default class Orph {
       `Orph.prototype.dispatch passed ${name} as name that is not retisterd`
     )
 
+    if (isObj(data) && isFnc(data.persist)){
+      data.persist()
+    }
+
     const actionObject: any = this._actions.get(name)
     ;(actionObject: ActionObject)
     const { action, useKeys } = actionObject
 
-    return Promise.resolve().then(() =>
-      action(
-        data,
-        this._createUse(useKeys)
-      )
-    )
+    try {
+      const result = action(data, this._createUse(useKeys))
+      return Promise.resolve(result)
+    } catch (err) {
+      return Promise.reject(err)
+    }
   }
 
   _createUse(useKeys: UseKeys) {
